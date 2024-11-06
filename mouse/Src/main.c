@@ -59,7 +59,7 @@ static Config config_boot(void) {
 	delay_ms(25); // delay in case power bounces on boot
 	Config cfg = config_read();
 	switch (btn_boot) {
-	case 0b000:
+	case 0b000: // Nothing pressed
 		anim_num(1 << (3 - _FLD2VAL(CONFIG_INTERVAL, cfg)));
 		break;
 	case 0b010: // LMB pressed
@@ -79,7 +79,10 @@ static Config config_boot(void) {
 			anim_one(1);
 		break;
 	case 0b111: // LMB, RMB and MMB pressed
-		cfg = (cfg & (~CONFIG_INTERVAL_Msk)) | (2 << CONFIG_INTERVAL_Pos);
+		if (_FLD2VAL(CONFIG_INTERVAL, cfg) == 2)
+			cfg = (cfg & (~CONFIG_INTERVAL_Msk)) | (0 << CONFIG_INTERVAL_Pos);
+		else
+			cfg = (cfg & (~CONFIG_INTERVAL_Msk)) | (2 << CONFIG_INTERVAL_Pos);
 		config_write(cfg);
 		anim_num(_FLD2VAL(CONFIG_INTERVAL, cfg));
 		break;
