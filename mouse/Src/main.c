@@ -48,6 +48,8 @@ typedef union {
 } Usb_packet;
 static_assert(sizeof(Usb_packet) == 2*sizeof(uint32_t), "Usb_packet wrong size");
 
+Config cfg;
+
 static Config config_boot(void) {
 	// read button state on boot
 	uint8_t btn_boot = 0;
@@ -242,7 +244,7 @@ int main(void) {
 	int whl_lastlast = whl_read();
 	int whl_last = whl_lastlast;
 	int whl_count = 0; // microframe counter for limiting wheel code rate
-	Config cfg = config_boot();
+	cfg = config_boot();
 
 	const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
 	anim_set_scale(hs_usb ? 8 : 1);
