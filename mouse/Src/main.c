@@ -33,20 +33,18 @@
 #include "clock.h"
 #include "config.h"
 #include "delay.h"
+#include "main.h"
 
 #define TIMEOUT_SECS 5 // seconds of holding buttons for programming mode
 
-typedef union {
-	struct __PACKED { // use the order in the report descriptor
-		uint8_t btn;
-		int8_t whl;
-		int16_t x, y;
-		uint16_t _pad; // zero pad to 8 bytes total
-	};
-	uint8_t u8[8]; // btn, wheel, xlo, xhi, ylo, yhi, 0, 0
-	uint32_t u32[2];
-} Usb_packet;
-static_assert(sizeof(Usb_packet) == 2*sizeof(uint32_t), "Usb_packet wrong size");
+Config cfg;
+int skip;
+
+Usb_packet buffer = { 0 }; // packet to buffer next data in each loop
+Usb_packet next = { 0 }; // packet in progress will be sent next
+Usb_packet last = { 0 }; // packet that was sent last
+uint8_t ready = 0;
+int hs_usb;
 
 static Config config_boot(void) {
 	// read button state on boot
@@ -95,7 +93,7 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 	static uint32_t large_step = 0; // ignore releases of the other button for large dpi steps.
 
 	const int hs = ((*cfg & CONFIG_HS_USB) != 0);
-	const int timeout_ticks = TIMEOUT_SECS * (hs ? 8000 : 1000);
+	const int timeout_ticks = TIMEOUT_SECS * (hs ? 32000 : 32000);
 
 	// typically squal in 60s for lifted 3399.
 	const int SQUAL_THRESH = 75;
@@ -238,132 +236,85 @@ int main(void) {
 	clk_init();
 	delay_init();
 	btn_whl_init();
-	uint8_t btn_prev = 0;
-	int whl_lastlast = whl_read();
-	int whl_last = whl_lastlast;
-	int whl_count = 0; // microframe counter for limiting wheel code rate
-	Config cfg = config_boot();
 
-	const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
-	anim_set_scale(hs_usb ? 8 : 1);
+	cfg = config_boot();
+	hs_usb = ((cfg & CONFIG_HS_USB) != 0);
+	// 8000 to 1000, 2000, 4000
+	// 0, 1, 2, 3
+	// 0, 1, 3, 7 frames to skip
+    skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
+
 	usb_init(hs_usb);
-	usb_wait_configured();
+	anim_set_scale(hs_usb ? 32 : 32);
 
 	spi_init();
 	paw3399_init(cfg);
 
-	const uint32_t USBx_BASE = (uint32_t) USB_OTG_HS; // used in macros USBx_*
-	// fifo space when empty, should equal 0x174, from init_usb
-	const uint32_t fifo_space = (USBx_INEP(1)->DTXFSTS
-			& USB_OTG_DTXFSTS_INEPTFSAV);
+	uint8_t btn_prev = 0;
+	int whl_lastlast = whl_read();
+	int whl_last = whl_lastlast;
+	int whl_count = 0; // microframe counter for limiting wheel code rate
 
-	Usb_packet new = { 0 }; // what's new this loop
-	Usb_packet send = { 0 }; // what's transmitted
+	usb_wait_configured();
 
-	int skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
-	int count = 0; // counter to skip reports
-
-	USB_OTG_HS->GINTMSK |= USB_OTG_GINTMSK_SOFM; // enable SOF interrupt
 	while (1) {
-		// always check that usb is configured
-		usb_wait_configured();
-
-		// wait for SOF to sync to usb frames
-		USB_OTG_HS->GINTSTS |= USB_OTG_GINTSTS_SOF;
-		__WFI();
-
-		// if full speed usb, delay here to minimize input lag
-		if (!hs_usb)
-			delay_us(873);
-
-		delay_us(88);
-
 		// read sensor, buttons
 		ss_low();
 		spi_send(0x16);
 		delay_us(2);
 		(void) spi_recv(); // motion, not used
 		(void) spi_recv(); // observation, not used
-		new.u8[2] = spi_recv(); // x lower 8 bits
-		new.u8[3] = spi_recv(); // x upper 8 bits
-		new.u8[4] = spi_recv(); // y lower 8 bits
-		new.u8[5] = spi_recv(); // y upper 8 bits
+		buffer.u8[2] = spi_recv(); // x lower 8 bits
+		buffer.u8[3] = spi_recv(); // x upper 8 bits
+		buffer.u8[4] = spi_recv(); // y lower 8 bits
+		buffer.u8[5] = spi_recv(); // y upper 8 bits
 		const uint8_t squal = spi_recv(); // SQUAL
 		ss_high();
 
-		new.whl = 0;
+		buffer.whl = 0;
 
 		if (whl_count == 0) {
 			const int whl_now = whl_read();
 			if (whl_now != whl_last) {
 				if (!((whl_now == 0 && whl_last == 3) || (whl_now == 3 && whl_last == 0))) {
 					if (whl_now == 0 && whl_lastlast == 3) {
-						new.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
+						buffer.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
 					} else if (whl_now == 3 && whl_lastlast == 0) {
-						new.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
+						buffer.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
 					}
 					whl_lastlast = whl_last;
 					whl_last = whl_now;
 				}
 			}
 		}
-		if (hs_usb) // only run wheel code every 4 microframes
-			whl_count = (whl_count + 1) % 4;
+		//if (hs_usb) // only run wheel code every 4 microframes
+		//	whl_count = (whl_count + 1) % 4;
 
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
-		btn_prev = new.btn;
-		new.btn = (~btn_NO & 0b111) | (btn_NC & btn_prev);
+		btn_prev = buffer.btn; // wtf?
+		buffer.btn = (~btn_NO & 0b111) | (btn_NC & btn_prev);
 
 		// mode processing
-		const uint32_t mask = mode_process(&cfg, &skip, new.btn, btn_prev, squal);
+		const uint32_t mask = mode_process(&cfg, &skip, buffer.btn, btn_prev, squal);
 
 		// animation stuff
 		const struct Xy a = anim_read(); // returns 0 if no animation left
-		new.x += a.x;
-		new.y += a.y;
+		buffer.x += a.x;
+		buffer.y += a.y;
 
-		// if last packet still sitting in fifo
-		if ((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) < fifo_space) {
-			// flush fifo
-			USB_OTG_HS->GRSTCTL = _VAL2FLD(USB_OTG_GRSTCTL_TXFNUM,
-					1) | USB_OTG_GRSTCTL_TXFFLSH;
-			while ((USB_OTG_HS->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) != 0)
-				;
-			count = 0; // reset counter, try to transmit again
-		} else if (count == skip) { // last loop transmitted successfully
-			send.whl = 0;
-			send.x = 0;
-			send.y = 0;
-		}
-		send.whl += new.whl;
-		send.x += new.x;
-		send.y += new.y;
-
-		// skip transmission for "skip" loops after a successful transmission
-		if (count > 0) {
-			count--;
-			continue;
-		}
-
-		// if there is data to transmitted
-		if (new.btn != send.btn || send.whl || send.x || send.y) {
-			send.btn = new.btn;
-			// disable transfer complete interrupts, in case enabled by OTG_HS_IRQHandler
-			USBx_DEVICE->DIEPMSK &= ~USB_OTG_DIEPMSK_XFRCM;
-			// set up transfer size
-			MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
-					USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
-					_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
-			// enable endpoint
-			USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
-					| USB_OTG_DIEPCTL_EPENA;
-			// write to fifo
-			USBx_DFIFO(1) = send.u32[0] & mask;
-			USBx_DFIFO(1) = send.u32[1];
-			count = skip;
-		}
-	}
+		__disable_irq();
+		next.btn = buffer.btn & mask;
+		next.whl = next.whl + buffer.whl;
+		next.x = next.x + buffer.x;
+		next.y = next.y + buffer.y;
+		ready = 1;
+		//buffer.btn = 0;  You need buffer btn data to stay for btn_prev
+		buffer.whl = 0;
+		buffer.x = 0;
+		buffer.y = 0;
+	    __enable_irq();
+	} // while
 	return 0;
 }

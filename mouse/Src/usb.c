@@ -27,9 +27,12 @@
 #include "usbd_desc.h"
 #include "usbd_hid.h"
 #include "stm32f7xx_hal.h"
+#include "main.h"
 
 PCD_HandleTypeDef hpcd;
 USBD_HandleTypeDef USBD_Device;
+uint8_t frame_count = 0;
+uint32_t fifo_space;
 
 static void FlushRxFifo(USB_OTG_GlobalTypeDef *USBx)
 {
@@ -201,7 +204,7 @@ void usb_init(int hs_usb)
 	hpcd.Instance->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
 	hpcd.Instance->GINTMSK |= USB_OTG_GINTMSK_USBSUSPM | USB_OTG_GINTMSK_USBRST |
 				   USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_IEPINT |
-				   USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_WUIM;
+				   USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_WUIM | USB_OTG_GINTMSK_SOFM;
 
 	if (hpcd.Init.vbus_sensing_enable == 1U) {
 		hpcd.Instance->GINTMSK |= (USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_OTGINT);
@@ -226,6 +229,9 @@ void usb_init(int hs_usb)
 	HAL_Delay(3);
 	hpcd.Instance->GAHBCFG |= USB_OTG_GAHBCFG_GINT;
 	hpcd.Lock = HAL_UNLOCKED;
+
+	// This isn't the right value. WTF?
+	fifo_space = (USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
 }
 
 void usb_wait_configured(void)
@@ -233,6 +239,13 @@ void usb_wait_configured(void)
 	volatile uint8_t *state = &USBD_Device.dev_state;
 	while (*state != USBD_STATE_CONFIGURED)
 		__WFI();
+}
+
+void usb_wait_configured2(void)
+{
+	while (USBD_Device.dev_state != USBD_STATE_CONFIGURED){
+
+	}
 }
 
 ///char abcd[1000];
@@ -372,16 +385,56 @@ static HAL_StatusTypeDef PCD_EP_OutSetupPacket_int(PCD_HandleTypeDef *hpcd, uint
 
 void OTG_HS_IRQHandler(void)
 {
-	if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_SOF) != 0) {
-		USB_OTG_HS->GINTSTS |= USB_OTG_GINTSTS_SOF;
-		return;
-	}
-
   USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
 
-	// this is disabled by main loop
-	USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;
+  	// Handle SOF
+	if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_SOF) != 0) {
+		USB_OTG_HS->GINTSTS |= USB_OTG_GINTSTS_SOF;
+
+		// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
+		if (frame_count == (skip + 1)) {
+
+			frame_count = 0;
+
+			if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
+				// TODO I can't use fifospace as it isn't correct. Hardcoded works
+				if((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) == 0x174U) {
+					// we don't want to send next when it hasn't been updated
+					if (ready == 1) {
+						// check that data has changed. set idle says no updates with no change
+						if ((next.btn != last.btn || next.whl || next.x || next.y)) {
+							// set up transfer size
+							MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
+									USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
+									_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
+							// enable endpoint
+							USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
+									| USB_OTG_DIEPCTL_EPENA;
+
+							// write to fifo
+							USBx_DFIFO(1) = next.u32[0];
+							USBx_DFIFO(1) = next.u32[1];
+							// save sent packet
+							last.btn = next.btn;
+							last.whl = next.whl;
+							last.x = next.x;
+							last.y = next.y;
+							// reset next
+							next.btn = 0;
+							next.whl = 0;
+							next.x = 0;
+							next.y = 0;
+							// set ready to false we don't want to send unfilled packet
+							ready = 0;
+						}
+					}
+				}
+			}
+		}
+		// Increment each frame because we need to skip to lower polling rate
+		frame_count++;
+	}
 
   uint32_t i, ep_intr, epint, epnum;
   uint32_t fifoemptymsk, temp;
@@ -508,5 +561,7 @@ void OTG_HS_IRQHandler(void)
       HAL_PCD_ResetCallback(&hpcd);
       __HAL_PCD_CLEAR_FLAG(&hpcd, USB_OTG_GINTSTS_ENUMDNE);
     }
+
+
 }
 

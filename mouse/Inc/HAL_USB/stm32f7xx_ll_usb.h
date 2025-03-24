@@ -402,7 +402,12 @@ typedef struct
 #define USBx_INEP(i)    ((USB_OTG_INEndpointTypeDef *)(USBx_BASE + USB_OTG_IN_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE)))
 #define USBx_OUTEP(i)   ((USB_OTG_OUTEndpointTypeDef *)(USBx_BASE + USB_OTG_OUT_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE)))
 #define USBx_DFIFO(i)   *(__IO uint32_t *)(USBx_BASE + USB_OTG_FIFO_BASE + ((i) * USB_OTG_FIFO_SIZE))
-
+#if 0
+#define USBx_DFIFO(i) (*(__IO uint32_t *)( \
+    (i) == 0 ? 0x40041800UL : /* EP0 TxFIFO */ \
+    (i) == 1 ? 0x40041880UL : /* EP1 TxFIFO */ \
+    0x40041000UL)) /* RxFIFO */
+#endif
 #define USBx_HOST       ((USB_OTG_HostTypeDef *)(USBx_BASE + USB_OTG_HOST_BASE))
 #define USBx_HC(i)      ((USB_OTG_HostChannelTypeDef *)(USBx_BASE + USB_OTG_HOST_CHANNEL_BASE + ((i) * USB_OTG_HOST_CHANNEL_SIZE)))
 #define USBPHYC         ((USBPHYC_GlobalTypeDef *)((uint32_t )USB_PHY_HS_CONTROLLER_BASE))
