@@ -45,6 +45,7 @@ Usb_packet next = { 0 }; // packet in progress will be sent next
 Usb_packet last = { 0 }; // packet that was sent last
 uint8_t ready = 0;
 int hs_usb;
+int sync = 0;
 
 static Config config_boot(void) {
 	// read button state on boot
@@ -93,7 +94,7 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 	static uint32_t large_step = 0; // ignore releases of the other button for large dpi steps.
 
 	const int hs = ((*cfg & CONFIG_HS_USB) != 0);
-	const int timeout_ticks = TIMEOUT_SECS * (hs ? 32000 : 32000);
+	const int timeout_ticks = TIMEOUT_SECS * (hs ? 8000 : 1000);
 
 	// typically squal in 60s for lifted 3399.
 	const int SQUAL_THRESH = 75;
@@ -245,7 +246,7 @@ int main(void) {
     skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
 
 	usb_init(hs_usb);
-	anim_set_scale(hs_usb ? 32 : 32);
+	anim_set_scale(hs_usb ? 8 : 1);
 
 	spi_init();
 	paw3399_init(cfg);
@@ -258,6 +259,14 @@ int main(void) {
 	usb_wait_configured();
 
 	while (1) {
+
+		if (sync == 0)
+			continue;
+
+		sync = 0;
+
+		// TODO FIX ANIMATION and time scaling for loop
+
 		// read sensor, buttons
 		ss_low();
 		spi_send(0x16);

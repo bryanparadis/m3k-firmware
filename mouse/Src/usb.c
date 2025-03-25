@@ -392,6 +392,8 @@ void OTG_HS_IRQHandler(void)
 	if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_SOF) != 0) {
 		USB_OTG_HS->GINTSTS |= USB_OTG_GINTSTS_SOF;
 
+		sync = 1;
+
 		// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
 		if (frame_count == (skip + 1)) {
 

@@ -25,5 +25,6 @@ extern Usb_packet last;
 extern uint8_t ready;
 extern int skip;
 extern int hs_usb;
+extern int sync;
 
 #endif /* MAIN_H_ */
