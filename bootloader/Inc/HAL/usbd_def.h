@@ -70,6 +70,9 @@ extern "C" {
 #endif /* USBD_CLASS_USER_STRING_DESC */
 
 #define  USB_LEN_DEV_QUALIFIER_DESC                     0x0AU
+#define  USB_SIZ_BOS_DESC								0x21U
+#define  USB_SIZ_MSOS2_STR_DESC							0x12U
+#define  USB_SIZ_MSOS2_DESC								0x1EU
 #define  USB_LEN_DEV_DESC                               0x12U
 #define  USB_LEN_CFG_DESC                               0x09U
 #define  USB_LEN_IF_DESC                                0x09U
@@ -84,10 +87,12 @@ extern "C" {
 #define  USBD_IDX_SERIAL_STR                            0x03U
 #define  USBD_IDX_CONFIG_STR                            0x04U
 #define  USBD_IDX_INTERFACE_STR                         0x05U
+#define  USB_IDX_MSOS2_STR								0xEEU
 
 #define  USB_REQ_TYPE_STANDARD                          0x00U
 #define  USB_REQ_TYPE_CLASS                             0x20U
 #define  USB_REQ_TYPE_VENDOR                            0x40U
+#define  USB_REQ_TYPE_VENDOR_DEVICE                     0xC0U // This is Host to device vendor request
 #define  USB_REQ_TYPE_MASK                              0x60U
 
 #define  USB_REQ_RECIPIENT_DEVICE                       0x00U
@@ -100,6 +105,7 @@ extern "C" {
 #define  USB_REQ_SET_FEATURE                            0x03U
 #define  USB_REQ_SET_ADDRESS                            0x05U
 #define  USB_REQ_GET_DESCRIPTOR                         0x06U
+#define  USB_REQ_GET_MSOS2_DESCRIPTOR                   0xEEU
 #define  USB_REQ_SET_DESCRIPTOR                         0x07U
 #define  USB_REQ_GET_CONFIGURATION                      0x08U
 #define  USB_REQ_SET_CONFIGURATION                      0x09U
@@ -115,6 +121,7 @@ extern "C" {
 #define  USB_DESC_TYPE_DEVICE_QUALIFIER                 0x06U
 #define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION        0x07U
 #define  USB_DESC_TYPE_BOS                              0x0FU
+#define  USB_DESC_TYPE_MSOS2							0xEEU
 
 #define USB_CONFIG_REMOTE_WAKEUP                        0x02U
 #define USB_CONFIG_SELF_POWERED                         0x01U
@@ -248,9 +255,9 @@ typedef struct
 #if (USBD_CLASS_USER_STRING_DESC == 1)
   uint8_t *(*GetUserStrDescriptor)(USBD_SpeedTypeDef speed, uint8_t idx, uint16_t *length);
 #endif
-#if ((USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1))
   uint8_t *(*GetBOSDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
-#endif
+  uint8_t *(*GetMSOS2StrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
+  uint8_t *(*GetMSOS2Descriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
 } USBD_DescriptorsTypeDef;
 
 /* USB Device handle structure */

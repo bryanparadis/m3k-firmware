@@ -101,12 +101,28 @@ USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
 {
   USBD_StatusTypeDef ret = USBD_OK;
 
+  //0x00: Standard (e.g., 0x80, 0x00)
+  //0x20: Class (e.g., 0xA1, 0x21)
+  //0x40: Vendor (e.g., 0xC0, 0x40)
+  // 0x60: Reserved (e.g., 0xE0, 0x60)
+
+  uint8_t *pbuf = NULL;
+  uint16_t len = 0U;
+
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
+
+
   case USB_REQ_TYPE_CLASS:
   case USB_REQ_TYPE_VENDOR:
-    ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
-    break;
+	  if (req->bmRequest == 0xC0U && req->bRequest == 0xEEU && req->wIndex == 0x0007U) {
+		  //USBD_GetDescriptor(pdev, req);
+		  pbuf = pdev->pDesc->GetMSOS2Descriptor(pdev->dev_speed, &len);
+		  (void)USBD_CtlSendData(pdev, pbuf, len);
+	  } else {
+		  ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+	  }
+	  break;
 
   case USB_REQ_TYPE_STANDARD:
     switch (req->bRequest)
@@ -385,7 +401,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
 
   switch (req->wValue >> 8)
   {
-#if ((USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1U))
+
   case USB_DESC_TYPE_BOS:
     if (pdev->pDesc->GetBOSDescriptor != NULL)
     {
@@ -397,7 +413,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
       err++;
     }
     break;
-#endif
+
   case USB_DESC_TYPE_DEVICE:
     pbuf = pdev->pDesc->GetDeviceDescriptor(pdev->dev_speed, &len);
     break;
@@ -489,6 +505,21 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
         err++;
       }
       break;
+      // This is the old way via 0xEE string descriptor.
+      // It worked so leaving it here in case we have to fall back to this method
+#if 0
+	case USB_IDX_MSOS2_STR:
+	  if (pdev->pDesc->GetMSOS2StrDescriptor != NULL)
+	    {
+		  pbuf = pdev->pDesc->GetMSOS2StrDescriptor(pdev->dev_speed, &len);
+		}
+		else
+		{
+	      USBD_CtlError(pdev, req);
+		  err++;
+		}
+		break;
+#endif
 
     default:
 #if (USBD_SUPPORT_USER_STRING_DESC == 1U)
