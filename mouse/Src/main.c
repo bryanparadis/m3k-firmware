@@ -265,8 +265,6 @@ int main(void) {
 
 		sync = 0;
 
-		// TODO FIX ANIMATION and time scaling for loop
-
 		// read sensor, buttons
 		ss_low();
 		spi_send(0x16);
@@ -296,8 +294,8 @@ int main(void) {
 				}
 			}
 		}
-		//if (hs_usb) // only run wheel code every 4 microframes
-		//	whl_count = (whl_count + 1) % 4;
+		if (hs_usb) // only run wheel code every 4 microframes
+			whl_count = (whl_count + 1) % 4;
 
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
