@@ -37,15 +37,12 @@
 
 #define TIMEOUT_SECS 5 // seconds of holding buttons for programming mode
 
-Config cfg;
-int8_t volatile skip;
-
-Usb_packet buffer = { 0 }; // packet to buffer next data in each loop
+// used in usb.c via extern in main.h
 volatile Usb_packet packet = { 0 }; // packet in progress will be sent next
-volatile Usb_packet last_packet = { 0 }; // packet that was sent last
 uint8_t volatile ready = 0;
-uint8_t volatile hs_usb;
 uint8_t volatile sync = 0;
+
+Usb_packet last_packet = { 0 };
 
 static Config config_boot(void) {
 	// read button state on boot
@@ -84,7 +81,7 @@ static Config config_boot(void) {
 	return cfg;
 }
 
-static inline uint32_t mode_process(Config *cfg, volatile int8_t *skip,
+static inline uint32_t mode_process(Config *cfg, int *skip,
 		const uint8_t btn, const uint8_t btn_prev, const uint8_t squal) {
 	// mode 0: normal
 	// mode 1: cpi programming
@@ -94,7 +91,13 @@ static inline uint32_t mode_process(Config *cfg, volatile int8_t *skip,
 	static uint32_t large_step = 0; // ignore releases of the other button for large dpi steps.
 
 	const int hs = ((*cfg & CONFIG_HS_USB) != 0);
-	const int timeout_ticks = TIMEOUT_SECS * (hs ? 8000 : 1000);
+	// 40000 / ( interval + 1)
+	// frames_to_skip 0 = 8000Hz = 40000/(0+1) = 40000 timeout ticks
+	// frames_to_skip 1 = 4000Hz = 40000/(1+1) = 20000 timeout ticks
+	// frames_to_skip 3 = 2000Hz = 40000/(3+1) = 10000 timeout ticks
+	// frames_to_skip 7 = 1000Hz = 40000/(7+1) =  5000 timeout ticks
+	const int timeout_ticks = TIMEOUT_SECS * (hs ? (8000 /(*skip + 1)) : 1000);
+	//const int timeout_ticks = hs ? (40000 / (*skip + 1)) : 1000;
 
 	// typically squal in 60s for lifted 3399.
 	const int SQUAL_THRESH = 75;
@@ -156,6 +159,7 @@ static inline uint32_t mode_process(Config *cfg, volatile int8_t *skip,
 			const int new_itv = (_FLD2VAL(CONFIG_INTERVAL, *cfg) - 1) % 4;
 			*cfg = (*cfg & (~CONFIG_INTERVAL_Msk)) | (new_itv << CONFIG_INTERVAL_Pos);
 			*skip = (1 << new_itv) - 1;
+			anim_set_scale(hs ? (8 /(*skip + 1)) : 1);
 			anim_num(1 << (3 - new_itv));
 		}
 	}
@@ -223,12 +227,11 @@ static inline uint32_t mode_process(Config *cfg, volatile int8_t *skip,
 	}
 
 	// input mask
-	return (mode == 0) ? 0xFFFFFFFF : 0xFFFFFFFC;
+	return (mode == 0) ? btn : 0x00U;
+
 }
 
 int main(void) {
-//	extern uint32_t _sitcm;
-//	SCB->VTOR = (uint32_t)(&_sitcm);
 	extern uint32_t _sflash;
 	SCB->VTOR = (uint32_t) (&_sflash);
 	SCB_EnableICache();
@@ -238,51 +241,59 @@ int main(void) {
 	delay_init();
 	btn_whl_init();
 
-	cfg = config_boot();
-	hs_usb = ((cfg & CONFIG_HS_USB) != 0);
+	Config cfg = config_boot();
+	const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
 	// 8000 to 1000, 2000, 4000
 	// 0, 1, 2, 3
 	// 0, 1, 3, 7 frames to skip
-    skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
+    int frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
+	//int frames_to_skip = 0;
+    int frame_counter = 0;
+     // packet that was sent last
 
 	usb_init(hs_usb);
-	anim_set_scale(hs_usb ? 8 : 1);
+	// frames_to_skip = 0 = 8000Hz = 8 / (0 + 1)  = 8 animation_scaling
+	// frames_to_skip = 1 = 4000Hz = 8 / (1 + 1)  = 4 animation_scaling
+	// frames_to_skip = 3 = 2000Hz = 8 / (3 + 1)  = 2 animation_scaling
+	// frames_to_skip = 7 = 1000Hz = 8 / (7 + 1)  = 1 animation_scaling
+	anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
 
 	spi_init();
 	paw3399_init(cfg);
 
 	uint8_t btn_prev = 0;
+	uint8_t btn_unmasked = 0;
 	int whl_lastlast = whl_read();
 	int whl_last = whl_lastlast;
 	int whl_count = 0; // microframe counter for limiting wheel code rate
 
-	//sync = 0;
-
-	// WTF IS THIS SHIT?
 	usb_wait_configured();
-
-/*
-	last.x = 0;
-	last.y = 0;
-	last.btn = 0;
-	last.whl = 0;
-*/
 
 	while (1) {
 
 		// do not run until NAK or XFRC on EP1
-		if (sync == 0)
+		if (sync != 1)
 			continue;
-
 		sync = 0;
+
+        // no skipping
+		if (frames_to_skip != 0){
+			if ( frame_counter == frames_to_skip) {
+				frame_counter = 0;
+				continue;
+			} else if ( frame_counter != 0 ) {
+				frame_counter++;
+				continue;
+			} else {
+				frame_counter++;
+			}
+		}
 
 		// reset packet
 		// packet.btn = 0;  You need buffer btn data to stay for btn_prev
 		packet.whl = 0;
 		packet.x = 0;
 		packet.y = 0;
-
-		// TODO add frame skip back
 
 		// read sensor, buttons
 		ss_low();
@@ -317,13 +328,14 @@ int main(void) {
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
-		btn_prev = packet.btn; // wtf?
-		packet.btn = (~btn_NO & 0b111) | (btn_NC & btn_prev);
+		// this is kind of confusing
+		// btn_prev needs to be last loops btn
+		btn_prev = btn_unmasked;
+		// btn_unmasked is used as the actualy btn data and return from mode_process is added to packet instead
+		btn_unmasked = (~btn_NO & 0b111) | (btn_NC & btn_prev);
 
-		// mode processing
-		const uint32_t mask = mode_process(&cfg, &skip, buffer.btn, btn_prev, squal);
-
-		packet.btn = packet.btn & mask;
+		// mode processing returns btn or 0x00U if you are changing settings
+	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_prev, squal);
 
 		// animation stuff
 		const struct Xy a = anim_read(); // returns 0 if no animation left
@@ -336,10 +348,6 @@ int main(void) {
 		if ( packet.btn != last_packet.btn || packet.x || packet.y || packet.whl ) {
 		  // save last packet
 		  last_packet.btn = packet.btn;
-		  // don't really need these?
-		  last_packet.whl = packet.whl;
-		  last_packet.x = packet.x;
-		  last_packet.y = packet.y;
 		  ready = 1;
 		}
 	    __enable_irq();

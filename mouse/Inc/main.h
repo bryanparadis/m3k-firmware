@@ -21,11 +21,7 @@ typedef union {
 //static_assert(sizeof(Usb_packet) == 2*sizeof(uint32_t), "Usb_packet wrong size");
 
 extern volatile Usb_packet packet;
-//extern volatile Usb_packet last;
-/*
 extern volatile uint8_t ready;
-extern volatile int8_t skip;
-extern volatile uint8_t hs_usb;
 extern volatile uint8_t sync;
-*/
+
 #endif /* MAIN_H_ */
