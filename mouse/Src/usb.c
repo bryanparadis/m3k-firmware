@@ -29,6 +29,14 @@
 #include "stm32f7xx_hal.h"
 #include "main.h"
 
+//extern volatile Usb_packet next;
+//extern volatile Usb_packet last;
+//static Usb_packet last = { 0 };
+extern volatile uint8_t ready;
+extern volatile int8_t skip;
+extern volatile uint8_t hs_usb;
+extern volatile uint8_t sync;
+
 PCD_HandleTypeDef hpcd;
 USBD_HandleTypeDef USBD_Device;
 uint8_t frame_count = 0;
@@ -175,7 +183,7 @@ void usb_init(int hs_usb)
 			if (i == 0U) {
 				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
 			} else {
-				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK;
+				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
 			}
 		} else {
 			USBx_INEP(i)->DIEPCTL = 0U;
@@ -198,6 +206,7 @@ void usb_init(int hs_usb)
 	}
 
 	USBx_DEVICE->DIEPMSK &= ~(USB_OTG_DIEPMSK_TXFURM);
+	USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;
 
 	hpcd.Instance->GINTMSK = 0U;
 	hpcd.Instance->GINTSTS = 0xBFFFFFFFU;
@@ -392,20 +401,32 @@ void OTG_HS_IRQHandler(void)
 	if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_SOF) != 0) {
 		USB_OTG_HS->GINTSTS |= USB_OTG_GINTSTS_SOF;
 
-		sync = 1;
+		/*
+		USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;
+		USBx_DEVICE->DAINTMSK |= 0x10003U;
 
-		// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
-		if (frame_count == (skip + 1)) {
+		MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
+				USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
+				_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
+		// enable endpoint
+		USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
+				| USB_OTG_DIEPCTL_EPENA;
+	*/
+	}
 
-			frame_count = 0;
+	//if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_IEPINT) != 0) {
+		if ((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_NAK) || (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC)) {
+			USBx_INEP(1)->DIEPINT |= USB_OTG_DIEPINT_NAK | USB_OTG_DIEPINT_XFRC;
+			// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
+
+			// make main loop create a new packet
+			sync = 1;
 
 			if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
-				// TODO I can't use fifospace as it isn't correct. Hardcoded works
+				// TODO I can't use fifospace as it isn't correct. Hardcoded works. Constant issue probably
 				if((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) == 0x174U) {
 					// we don't want to send next when it hasn't been updated
-					if (ready == 1) {
-						// check that data has changed. set idle says no updates with no change
-						if ((next.btn != last.btn || next.whl || next.x || next.y)) {
+					if (ready) {
 							// set up transfer size
 							MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
 									USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
@@ -415,28 +436,14 @@ void OTG_HS_IRQHandler(void)
 									| USB_OTG_DIEPCTL_EPENA;
 
 							// write to fifo
-							USBx_DFIFO(1) = next.u32[0];
-							USBx_DFIFO(1) = next.u32[1];
-							// save sent packet
-							last.btn = next.btn;
-							last.whl = next.whl;
-							last.x = next.x;
-							last.y = next.y;
-							// reset next
-							next.btn = 0;
-							next.whl = 0;
-							next.x = 0;
-							next.y = 0;
-							// set ready to false we don't want to send unfilled packet
+							USBx_DFIFO(1) = packet.u32[0];
+							USBx_DFIFO(1) = packet.u32[1];
 							ready = 0;
-						}
 					}
 				}
 			}
 		}
-		// Increment each frame because we need to skip to lower polling rate
-		frame_count++;
-	}
+
 
   uint32_t i, ep_intr, epint, epnum;
   uint32_t fifoemptymsk, temp;
@@ -543,9 +550,15 @@ void OTG_HS_IRQHandler(void)
         USBx_OUTEP(i)->DOEPCTL &= ~USB_OTG_DOEPCTL_STALL;
         USBx_OUTEP(i)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
       }
-      USBx_DEVICE->DAINTMSK |= 0x10001U;
+      USBx_DEVICE->DAINTMSK |= 0x10003U;
       USBx_DEVICE->DOEPMSK |= USB_OTG_DOEPMSK_STUPM | USB_OTG_DOEPMSK_XFRCM;
-      USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;
+      USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM; // | USB_OTG_DIEPMSK_NAKM;
+		MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
+				USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
+				_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
+		// enable endpoint
+		USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
+				| USB_OTG_DIEPCTL_EPENA;
       USBx_DEVICE->DCFG &= ~USB_OTG_DCFG_DAD; /* Set Default Address to 0 */
       (void)USB_EP0_OutStart(hpcd.Instance); /* setup EP0 to receive SETUP packets */
       __HAL_PCD_CLEAR_FLAG(&hpcd, USB_OTG_GINTSTS_USBRST);
@@ -563,7 +576,5 @@ void OTG_HS_IRQHandler(void)
       HAL_PCD_ResetCallback(&hpcd);
       __HAL_PCD_CLEAR_FLAG(&hpcd, USB_OTG_GINTSTS_ENUMDNE);
     }
-
-
 }
 

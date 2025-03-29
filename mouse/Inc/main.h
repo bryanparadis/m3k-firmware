@@ -18,13 +18,14 @@ typedef union {
 	uint8_t u8[8]; // btn, wheel, xlo, xhi, ylo, yhi, 0, 0
 	uint32_t u32[2];
 } Usb_packet;
-static_assert(sizeof(Usb_packet) == 2*sizeof(uint32_t), "Usb_packet wrong size");
+//static_assert(sizeof(Usb_packet) == 2*sizeof(uint32_t), "Usb_packet wrong size");
 
-extern Usb_packet next;
-extern Usb_packet last;
-extern uint8_t ready;
-extern int skip;
-extern int hs_usb;
-extern int sync;
-
+extern volatile Usb_packet packet;
+//extern volatile Usb_packet last;
+/*
+extern volatile uint8_t ready;
+extern volatile int8_t skip;
+extern volatile uint8_t hs_usb;
+extern volatile uint8_t sync;
+*/
 #endif /* MAIN_H_ */

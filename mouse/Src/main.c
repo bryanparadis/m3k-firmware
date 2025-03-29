@@ -38,14 +38,14 @@
 #define TIMEOUT_SECS 5 // seconds of holding buttons for programming mode
 
 Config cfg;
-int skip;
+int8_t volatile skip;
 
 Usb_packet buffer = { 0 }; // packet to buffer next data in each loop
-Usb_packet next = { 0 }; // packet in progress will be sent next
-Usb_packet last = { 0 }; // packet that was sent last
-uint8_t ready = 0;
-int hs_usb;
-int sync = 0;
+volatile Usb_packet packet = { 0 }; // packet in progress will be sent next
+volatile Usb_packet last_packet = { 0 }; // packet that was sent last
+uint8_t volatile ready = 0;
+uint8_t volatile hs_usb;
+uint8_t volatile sync = 0;
 
 static Config config_boot(void) {
 	// read button state on boot
@@ -84,7 +84,7 @@ static Config config_boot(void) {
 	return cfg;
 }
 
-static inline uint32_t mode_process(Config *cfg, int *skip,
+static inline uint32_t mode_process(Config *cfg, volatile int8_t *skip,
 		const uint8_t btn, const uint8_t btn_prev, const uint8_t squal) {
 	// mode 0: normal
 	// mode 1: cpi programming
@@ -256,14 +256,33 @@ int main(void) {
 	int whl_last = whl_lastlast;
 	int whl_count = 0; // microframe counter for limiting wheel code rate
 
+	//sync = 0;
+
+	// WTF IS THIS SHIT?
 	usb_wait_configured();
+
+/*
+	last.x = 0;
+	last.y = 0;
+	last.btn = 0;
+	last.whl = 0;
+*/
 
 	while (1) {
 
+		// do not run until NAK or XFRC on EP1
 		if (sync == 0)
 			continue;
 
 		sync = 0;
+
+		// reset packet
+		// packet.btn = 0;  You need buffer btn data to stay for btn_prev
+		packet.whl = 0;
+		packet.x = 0;
+		packet.y = 0;
+
+		// TODO add frame skip back
 
 		// read sensor, buttons
 		ss_low();
@@ -271,23 +290,21 @@ int main(void) {
 		delay_us(2);
 		(void) spi_recv(); // motion, not used
 		(void) spi_recv(); // observation, not used
-		buffer.u8[2] = spi_recv(); // x lower 8 bits
-		buffer.u8[3] = spi_recv(); // x upper 8 bits
-		buffer.u8[4] = spi_recv(); // y lower 8 bits
-		buffer.u8[5] = spi_recv(); // y upper 8 bits
+		packet.u8[2] = spi_recv(); // x lower 8 bits
+		packet.u8[3] = spi_recv(); // x upper 8 bits
+		packet.u8[4] = spi_recv(); // y lower 8 bits
+		packet.u8[5] = spi_recv(); // y upper 8 bits
 		const uint8_t squal = spi_recv(); // SQUAL
 		ss_high();
-
-		buffer.whl = 0;
 
 		if (whl_count == 0) {
 			const int whl_now = whl_read();
 			if (whl_now != whl_last) {
 				if (!((whl_now == 0 && whl_last == 3) || (whl_now == 3 && whl_last == 0))) {
 					if (whl_now == 0 && whl_lastlast == 3) {
-						buffer.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
+						packet.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
 					} else if (whl_now == 3 && whl_lastlast == 0) {
-						buffer.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
+						packet.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
 					}
 					whl_lastlast = whl_last;
 					whl_last = whl_now;
@@ -300,27 +317,31 @@ int main(void) {
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
-		btn_prev = buffer.btn; // wtf?
-		buffer.btn = (~btn_NO & 0b111) | (btn_NC & btn_prev);
+		btn_prev = packet.btn; // wtf?
+		packet.btn = (~btn_NO & 0b111) | (btn_NC & btn_prev);
 
 		// mode processing
 		const uint32_t mask = mode_process(&cfg, &skip, buffer.btn, btn_prev, squal);
 
+		packet.btn = packet.btn & mask;
+
 		// animation stuff
 		const struct Xy a = anim_read(); // returns 0 if no animation left
-		buffer.x += a.x;
-		buffer.y += a.y;
+		packet.x += a.x;
+		packet.y += a.y;
 
+		// TODO maybe critical section unnecessary now
 		__disable_irq();
-		next.btn = buffer.btn & mask;
-		next.whl = next.whl + buffer.whl;
-		next.x = next.x + buffer.x;
-		next.y = next.y + buffer.y;
-		ready = 1;
-		//buffer.btn = 0;  You need buffer btn data to stay for btn_prev
-		buffer.whl = 0;
-		buffer.x = 0;
-		buffer.y = 0;
+		// check to see if there is new data
+		if ( packet.btn != last_packet.btn || packet.x || packet.y || packet.whl ) {
+		  // save last packet
+		  last_packet.btn = packet.btn;
+		  // don't really need these?
+		  last_packet.whl = packet.whl;
+		  last_packet.x = packet.x;
+		  last_packet.y = packet.y;
+		  ready = 1;
+		}
 	    __enable_irq();
 	} // while
 	return 0;
