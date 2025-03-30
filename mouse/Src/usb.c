@@ -94,6 +94,7 @@ void usb_init(int hs_usb)
 	SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_OTGHSULPIEN);
 //	NVIC_SetPriority(OTG_HS_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
 	NVIC_EnableIRQ(OTG_HS_IRQn);
+	NVIC_EnableIRQ(OTG_HS_EP1_IN_IRQn);
 	// HAL_PCD_Init
 	hpcd.State = HAL_PCD_STATE_BUSY;
 	hpcd.Instance->GAHBCFG &= ~USB_OTG_GAHBCFG_GINT;
@@ -199,6 +200,9 @@ void usb_init(int hs_usb)
 
 	USBx_DEVICE->DIEPMSK &= ~(USB_OTG_DIEPMSK_TXFURM);
 	USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM; // | USB_OTG_DIEPMSK_ITTXFEMSK;
+
+	USBx_DEVICE->DINEP1MSK = USB_OTG_DIEPEACHMSK1_XFRCM | USB_OTG_DIEPEACHMSK1_NAKM;
+	USBx_DEVICE->DEACHMSK = USB_OTG_DEACHINTMSK_IEP1INTM;
 
 	hpcd.Instance->GINTMSK = 0U;
 	hpcd.Instance->GINTSTS = 0xBFFFFFFFU;
@@ -384,6 +388,50 @@ static HAL_StatusTypeDef PCD_EP_OutSetupPacket_int(PCD_HandleTypeDef *hpcd, uint
 ///USBD_SetupReqTypedef stps[50];
 ///int istp;
 
+void OTG_HS_EP1_IN_IRQHandler(void)
+{
+  USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
+  uint32_t USBx_BASE = (uint32_t)USBx;
+
+	if ((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_NAK) || (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC)) {
+		 // | USB_OTG_DIEPINT_XFRC;
+		// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
+
+		if((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_NAK)){
+			USBx_INEP(1)->DIEPINT = USB_OTG_DIEPINT_NAK;
+		}
+
+		if((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC)){
+			USBx_INEP(1)->DIEPINT = USB_OTG_DIEPINT_XFRC;
+		}
+		// make main loop create a new packet
+		sync = 1;
+
+		if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
+			// TODO I can't use fifospace as it isn't correct. Hardcoded works. Constant issue probably
+			if((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) == 0x174U) {
+				// we don't want to send next when it hasn't been updated
+				if (ready == 1) {
+
+						// set up transfer size
+						MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
+								USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
+								_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
+						// enable endpoint
+						USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
+								| USB_OTG_DIEPCTL_EPENA;
+
+
+						// write to fifo
+						USBx_DFIFO(1) = packet.u32[0];
+						USBx_DFIFO(1) = packet.u32[1];
+						ready = 0;
+				}
+			}
+		}
+	}
+}
+
 void OTG_HS_IRQHandler(void)
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
@@ -415,36 +463,7 @@ void OTG_HS_IRQHandler(void)
 	}
 
 	//if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_IEPINT) != 0) {
-		if ((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_NAK) || (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC)) {
-			USBx_INEP(1)->DIEPINT |= USB_OTG_DIEPINT_NAK; // | USB_OTG_DIEPINT_XFRC;
-			// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
 
-			// make main loop create a new packet
-			sync = 1;
-
-			if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
-				// TODO I can't use fifospace as it isn't correct. Hardcoded works. Constant issue probably
-				if((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) == 0x174U) {
-					// we don't want to send next when it hasn't been updated
-					if (ready == 1) {
-
-							// set up transfer size
-							MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
-									USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
-									_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
-							// enable endpoint
-							USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
-									| USB_OTG_DIEPCTL_EPENA;
-
-
-							// write to fifo
-							USBx_DFIFO(1) = packet.u32[0];
-							USBx_DFIFO(1) = packet.u32[1];
-							ready = 0;
-					}
-				}
-			}
-		}
 
 
   uint32_t i, ep_intr, epint, epnum;
