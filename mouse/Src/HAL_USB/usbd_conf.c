@@ -175,6 +175,9 @@ void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) // TOD
   USBD_EndpointTypeDef *pep;
 //  USBD_StatusTypeDef ret;
 
+  if(epnum == 1)
+    return;
+
   if (epnum == 0U)
   {
 	pep = &pdev->ep_out[0];
@@ -240,7 +243,13 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
 //  USBD_LL_DataInStage(hpcd->pData, epnum, hpcd->IN_ep[epnum].xfer_buff);
   USBD_HandleTypeDef *pdev = hpcd->pData;
+
+  if(epnum == 1)
+    return;
+
   uint8_t *pdata = hpcd->IN_ep[epnum].xfer_buff;
+
+
 
   USBD_EndpointTypeDef *pep;
 //  USBD_StatusTypeDef ret;
@@ -545,9 +554,13 @@ USBD_StatusTypeDef USBD_LL_OpenEP(USBD_HandleTypeDef *pdev,
   HAL_StatusTypeDef  ret = HAL_OK;
   PCD_EPTypeDef *ep;
 
+  // FACT: this turns on EP1
+
   if ((ep_addr & 0x80U) == 0x80U)
   {
     ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
+    //if(ep->num == 1)
+    //	return ret;
     ep->is_in = 1U;
   }
   else
@@ -661,7 +674,12 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev,
   PCD_HandleTypeDef *hpcd = pdev->pData;
   PCD_EPTypeDef *ep;
 
+
+
   ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
+
+  if(ep->num == 1)
+  	return HAL_OK;
 
   /*setup and start the Xfer */
   ep->xfer_buff = pBuf;
@@ -701,6 +719,8 @@ USBD_StatusTypeDef USBD_LL_StallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   if ((0x80U & ep_addr) == 0x80U)
   {
     ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
+    if(ep->num == 1)
+    	return HAL_OK;
     ep->is_in = 1U;
   }
   else
@@ -743,6 +763,8 @@ USBD_StatusTypeDef USBD_LL_ClearStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_add
   if ((0x80U & ep_addr) == 0x80U)
   {
     ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
+    if(ep->num == 1)
+    	return HAL_OK;
     ep->is_in = 1U;
   }
   else
@@ -829,7 +851,20 @@ USBD_StatusTypeDef USBD_LL_ClearStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_add
 uint8_t USBD_LL_IsStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
   PCD_HandleTypeDef *hpcd = pdev->pData;
+  PCD_EPTypeDef *ep;
   
+  if ((0x80U & ep_addr) == 0x80U)
+  {
+    ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
+    if(ep->num == 1)
+    	return HAL_OK;
+  }
+  else
+  {
+    ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
+
+  }
+
   if((ep_addr & 0x80) == 0x80)
   {
     return hpcd->IN_ep[ep_addr & 0x7F].is_stall;

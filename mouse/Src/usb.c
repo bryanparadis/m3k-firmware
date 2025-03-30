@@ -174,7 +174,8 @@ void usb_init(int hs_usb)
 			if (i == 0U) {
 				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
 			} else {
-				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
+				USBx_INEP(i)->DIEPCTL = USB_OTG_DOEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK;
+				//USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
 			}
 		} else {
 			USBx_INEP(i)->DIEPCTL = 0U;
@@ -197,14 +198,14 @@ void usb_init(int hs_usb)
 	}
 
 	USBx_DEVICE->DIEPMSK &= ~(USB_OTG_DIEPMSK_TXFURM);
-	USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM | USB_OTG_DIEPMSK_ITTXFEMSK;
+	USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM; // | USB_OTG_DIEPMSK_ITTXFEMSK;
 
 	hpcd.Instance->GINTMSK = 0U;
 	hpcd.Instance->GINTSTS = 0xBFFFFFFFU;
 	hpcd.Instance->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
 	hpcd.Instance->GINTMSK |= USB_OTG_GINTMSK_USBSUSPM | USB_OTG_GINTMSK_USBRST |
 				   USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_IEPINT |
-				   USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_WUIM; // | USB_OTG_GINTMSK_SOFM; // TODO Something odd going on we don't use SOF but shit doesn't work without it.
+				   USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_WUIM | USB_OTG_GINTMSK_SOFM; // TODO Something odd going on we don't use SOF but shit doesn't work without it.
 
 	if (hpcd.Init.vbus_sensing_enable == 1U) {
 		hpcd.Instance->GINTMSK |= (USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_OTGINT);
@@ -388,9 +389,15 @@ void OTG_HS_IRQHandler(void)
   USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
 
+  if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
+	//USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA;
+	//USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_EPENA;
+
+  }
+
   	// Handle SOF
 	if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_SOF) != 0) {
-		USB_OTG_HS->GINTSTS |= USB_OTG_GINTSTS_SOF;
+		USB_OTG_HS->GINTSTS = USB_OTG_GINTSTS_SOF;
 
 		/*
 		USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;
@@ -409,7 +416,7 @@ void OTG_HS_IRQHandler(void)
 
 	//if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_IEPINT) != 0) {
 		if ((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_NAK) || (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC)) {
-			USBx_INEP(1)->DIEPINT |= USB_OTG_DIEPINT_NAK | USB_OTG_DIEPINT_XFRC;
+			USBx_INEP(1)->DIEPINT |= USB_OTG_DIEPINT_NAK; // | USB_OTG_DIEPINT_XFRC;
 			// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
 
 			// make main loop create a new packet
@@ -420,6 +427,7 @@ void OTG_HS_IRQHandler(void)
 				if((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) == 0x174U) {
 					// we don't want to send next when it hasn't been updated
 					if (ready == 1) {
+
 							// set up transfer size
 							MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
 									USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
@@ -427,6 +435,7 @@ void OTG_HS_IRQHandler(void)
 							// enable endpoint
 							USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
 									| USB_OTG_DIEPCTL_EPENA;
+
 
 							// write to fifo
 							USBx_DFIFO(1) = packet.u32[0];
@@ -462,7 +471,7 @@ void OTG_HS_IRQHandler(void)
     {///abcd[a++]='O';
       /* Read in the device interrupt bits */
       ep_intr = USB_ReadDevAllOutEpInterrupt(hpcd.Instance);
-      for (epnum = 0; epnum < hpcd.Init.dev_endpoints; epnum++)
+      for (epnum = 0; epnum < 1; epnum++)
       {
         if ((ep_intr & (1 << epnum)) != 0)
         {
@@ -489,7 +498,7 @@ void OTG_HS_IRQHandler(void)
       /* Read in the device interrupt bits */
       ep_intr = USB_ReadDevAllInEpInterrupt(hpcd.Instance);
 
-      for (epnum = 0; epnum < hpcd.Init.dev_endpoints; epnum++)
+      for (epnum = 0; epnum < 1; epnum++)
       {
         if ((ep_intr & (1 << epnum)) != 0)
         {
@@ -545,7 +554,7 @@ void OTG_HS_IRQHandler(void)
       }
       USBx_DEVICE->DAINTMSK |= 0x10003U;
       USBx_DEVICE->DOEPMSK |= USB_OTG_DOEPMSK_STUPM | USB_OTG_DOEPMSK_XFRCM;
-      USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM | USB_OTG_DIEPMSK_ITTXFEMSK;
+      USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;// | USB_OTG_DIEPMSK_ITTXFEMSK;
 #if 0
 		MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
 				USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,

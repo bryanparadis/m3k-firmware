@@ -317,7 +317,67 @@ uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
     /* Open EP IN */
   (void)USBD_LL_OpenEP(pdev, HID_EPIN_ADDR, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
+#if 0
+  PCD_HandleTypeDef *hpcd = pdev->pData;
+  USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
+  uint32_t USBx_BASE = (uint32_t)USBx;
+
+  USB_OTG_EPTypeDef *ep;
+
+  ep = &hpcd->IN_ep[1];
+
+  uint32_t epnum = (uint32_t)ep->num;
+
+  __HAL_LOCK(hpcd);
+    USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK));
+
+    if ((USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_USBAEP) == 0U)
+    {
+      USBx_INEP(epnum)->DIEPCTL |= (ep->maxpacket & USB_OTG_DIEPCTL_MPSIZ) |
+                                   ((uint32_t)ep->type << 18) | (epnum << 22) |
+                                   USB_OTG_DIEPCTL_SD0PID_SEVNFRM |
+                                   USB_OTG_DIEPCTL_USBAEP;
+    }
+    __HAL_UNLOCK(hpcd);
+#endif
+
   pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 1U;
+
+
+
+
+#if 0
+  PCD_HandleTypeDef *hpcd = pdev->pData;
+  USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
+  uint32_t USBx_BASE = (uint32_t)USBx;
+/*
+	MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
+			USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
+			_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
+	// enable endpoint
+	USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA;
+*/
+	// Step 1: Configure as Interrupt endpoint
+	USBx_INEP(1)->DIEPCTL = (3U << 18)  // EPTYP = Interrupt
+						   | (64U << 0) // MPSIZ = 64 bytes
+						   | (1U << 15) // USBAEP = 1
+						   | (1 << 22) // TXFNUM TXFIFO 1
+						   | USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
+
+	 // Step 2: Set transfer parameters to avoid ZLP
+	 USBx_INEP(1)->DIEPTSIZ = (1U << 19) // PKTCNT = 0
+							| (0U << 21) // MCNT = 0 (if applicable)
+							| (6U << 0); // XFRSIZ = 0
+
+	USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (1 & EP_ADDR_MSK));
+
+	USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA;
+
+	USBx_DEVICE->DIEPMSK |=  USB_OTG_DIEPMSK_NAKM | USB_OTG_DIEPMSK_XFRCM;
+	//USBx_DEVICE->DAINTMSK |= 0x10003U;
+
+	//USBx->GINTMSK |= USB_OTG_GINTMSK_IEPINT;
+#endif
 
   hhid->state = HID_IDLE;
 
@@ -335,6 +395,7 @@ uint8_t USBD_HID_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   UNUSED(cfgidx);
 
+  return (uint8_t)USBD_OK;
   /* Close HID EPs */
   (void)USBD_LL_CloseEP(pdev, HID_EPIN_ADDR);
   pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 0U;
@@ -469,7 +530,7 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 
   return (uint8_t)ret;
 }
-#if 0
+
 /**
   * @brief  USBD_HID_SendReport
   *         Send HID Report
@@ -483,16 +544,16 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef *pdev, uint8_t *report, uint16_t 
 
   if (pdev->dev_state == USBD_STATE_CONFIGURED)
   {
-    if (hhid->state == HID_IDLE)
-    {
+    //if (hhid->state == HID_IDLE)
+    //{
       hhid->state = HID_BUSY;
       (void)USBD_LL_Transmit(pdev, HID_EPIN_ADDR, report, len);
-    }
+    //}
   }
 
   return (uint8_t)USBD_OK;
 }
-
+#if 0
 /**
   * @brief  USBD_HID_GetCfgFSDesc
   *         return FS configuration descriptor
