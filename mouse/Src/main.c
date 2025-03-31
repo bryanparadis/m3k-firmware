@@ -328,11 +328,11 @@ int main(void) {
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
-		// this is kind of confusing
-		// btn_prev needs to be last loops btn
+		// TODO can this move to the end of the loop? It should replace btn_prev or something.
 		btn_prev = btn_unmasked;
-		// btn_unmasked is used as the actualy btn data and return from mode_process is added to packet instead
-		btn_unmasked = (~btn_NO & 0b111) | (btn_NC & btn_prev);
+		// TODO is this necessary?
+		// btn_unmasked saves the unprocessed button data to compare to next loop
+		btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_prev);
 
 		// mode processing returns btn or 0x00U if you are changing settings
 	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_prev, squal);

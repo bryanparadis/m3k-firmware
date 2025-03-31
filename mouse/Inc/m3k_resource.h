@@ -63,7 +63,7 @@
 #define NRESET_PIN_Pos 8
 #define NRESET_PIN     (1 << NRESET_PIN_Pos)
 
-// lmb
+// lmb K5 PE9 - K10 PC2
 #define LMB_NO_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;} while(0)
 #define LMB_NO_PORT         GPIOE
 #define LMB_NO_PIN_Pos      9
@@ -76,7 +76,7 @@
 #define LMB_NC_PIN          (1 << LMB_NC_PIN_Pos)
 #define LMB_NC_EXTICFG      SYSCFG_EXTICR1_EXTI2_PC
 
-// rmb
+// rmb A10 PE3 - B10 PE6
 #define RMB_NO_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;} while(0)
 #define RMB_NO_PORT         GPIOE
 #define RMB_NO_PIN_Pos      3
@@ -89,7 +89,7 @@
 #define RMB_NC_PIN          (1 << RMB_NC_PIN_Pos)
 #define RMB_NC_EXTICFG      SYSCFG_EXTICR2_EXTI6_PE
 
-// mmb
+// mmb C1 PA11 - B2 PA12
 #define MMB_NO_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;} while(0)
 #define MMB_NO_PORT         GPIOA
 #define MMB_NO_PIN_Pos      11
@@ -102,7 +102,33 @@
 #define MMB_NC_PIN          (1 << MMB_NC_PIN_Pos)
 #define MMB_NC_EXTICFG      SYSCFG_EXTICR4_EXTI12_PA
 
-// wheel
+// button4 PA4 G7 - PA5 F6
+#define BT4_NO_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;} while(0)
+#define BT4_NO_PORT         GPIOA
+#define BT4_NO_PIN_Pos      4
+#define BT4_NO_PIN          (1 << BT4_NO_PIN_Pos)
+#define BT4_NO_EXTICFG      SYSCFG_EXTICR2_EXTI4_PA
+
+#define BT4_NC_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;} while(0)
+#define BT4_NC_PORT         GPIOA
+#define BT4_NC_PIN_Pos      5
+#define BT4_NC_PIN          (1 << BT4_NC_PIN_Pos)
+#define BT4_NC_EXTICFG      SYSCFG_EXTICR2_EXTI5_PA
+
+// button5 H2 PB13 - F4 PE15
+#define BT5_NO_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;} while(0)
+#define BT5_NO_PORT         GPIOB
+#define BT5_NO_PIN_Pos      13
+#define BT5_NO_PIN          (1 << BT5_NO_PIN_Pos)
+#define BT5_NO_EXTICFG      SYSCFG_EXTICR4_EXTI13_PB
+
+#define BT5_NC_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;} while(0)
+#define BT5_NC_PORT         GPIOE
+#define BT5_NC_PIN_Pos      15
+#define BT5_NC_PIN          (1 << BT5_NC_PIN_Pos)
+#define BT5_NC_EXTICFG      SYSCFG_EXTICR4_EXTI15_PE
+
+// wheel K7 PA7 - F8 PC0
 #define WHL_P_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;} while(0)
 #define WHL_P_PORT         GPIOA
 #define WHL_P_PIN_Pos      7
