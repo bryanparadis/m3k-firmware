@@ -406,12 +406,12 @@ void OTG_HS_EP1_IN_IRQHandler(void)
 		}
 		// make main loop create a new packet
 		sync = 1;
-
+	}
+	if (ready == 1 ) {
 		if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
 			// TODO I can't use fifospace as it isn't correct. Hardcoded works. Constant issue probably
 			if((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) == 0x174U) {
 				// we don't want to send next when it hasn't been updated
-				if (ready == 1) {
 
 						// set up transfer size
 						MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
@@ -426,7 +426,6 @@ void OTG_HS_EP1_IN_IRQHandler(void)
 						USBx_DFIFO(1) = packet.u32[0];
 						USBx_DFIFO(1) = packet.u32[1];
 						ready = 0;
-				}
 			}
 		}
 	}

@@ -41,7 +41,7 @@
 volatile Usb_packet packet = { 0 }; // packet in progress will be sent next
 uint8_t volatile ready = 0;
 uint8_t volatile sync = 0;
-
+uint8_t count = 0;
 Usb_packet last_packet = { 0 };
 
 static Config config_boot(void) {
@@ -276,7 +276,16 @@ int main(void) {
 			continue;
 		sync = 0;
 
-        // no skipping
+		// Testing delay by lifting mouse and holding button 1 while plugging in
+		// If the first input report is actually sent on 2nd poll with 1 NAK before it is good
+
+		//75 ok  1 poll
+		//77 ok  1 poll
+		//78 bad 2 polls
+
+		delay_us(60);
+
+        // frames to skip 0 = 8000Hz, 1 = 4000Hz, 3 = 2000Hz and 7 = 1000Hz
 		if (frames_to_skip != 0){
 			if ( frame_counter == frames_to_skip) {
 				frame_counter = 0;
@@ -337,10 +346,41 @@ int main(void) {
 		// mode processing returns btn or 0x00U if you are changing settings
 	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_prev, squal);
 
+#if 1
 		// animation stuff
 		const struct Xy a = anim_read(); // returns 0 if no animation left
 		packet.x += a.x;
 		packet.y += a.y;
+#endif
+
+		// testing code that checks for dropping frames
+#if 0
+		if (count == 0) {
+			packet.x = -100;
+			packet.y = 0;
+			count ++;
+		} else {
+			packet.x = 100;
+		    packet.y = 0;
+		    count = 0;
+		}
+#endif
+
+#if 0
+		// testing code that replaces btn with a counter 1-4 on each poll
+		// counter starts at 0 but we want to do 1-4 on this one
+		if (count == 0){
+			count = 1;
+		}
+
+		packet.btn = count;
+		if(count == 4){
+			count = 1;
+		} else {
+			count++;
+		}
+
+#endif
 
 		// TODO maybe critical section unnecessary now
 		__disable_irq();
@@ -349,6 +389,8 @@ int main(void) {
 		  // save last packet
 		  last_packet.btn = packet.btn;
 		  ready = 1;
+		  // enqueue fifo write
+		  NVIC->STIR = OTG_HS_EP1_IN_IRQn;
 		}
 	    __enable_irq();
 	} // while
