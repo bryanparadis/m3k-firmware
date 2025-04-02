@@ -25,6 +25,8 @@
 
 #include "stm32f7xx.h"
 
+// 32
+#if 1
 static void clk_init(void)
 {
 	RCC->CR |= RCC_CR_HSEON; // turn on HSE
@@ -60,3 +62,42 @@ static void clk_init(void)
     MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2, RCC_CFGR_PPRE2_DIV1); // apb2 = sysclk
     RCC->CR &= ~RCC_CR_HSION; // turn off HSI (not necessary)
 }
+#endif
+
+// 64
+#if 0
+static void clk_init(void)
+{
+    RCC->CR |= RCC_CR_HSEON; // turn on HSE (24 MHz)
+    while ((RCC->CR & RCC_CR_HSERDY) == 0);
+
+    RCC->CR &= ~RCC_CR_PLLON; // disable PLL
+    while ((RCC->CR & RCC_CR_PLLRDY) != 0);
+
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    MODIFY_REG(PWR->CR1, PWR_CR1_VOS, _VAL2FLD(PWR_CR1_VOS, 0b10)); // Scale 2 for 64 MHz
+
+    // Configure PLL for 64 MHz SYSCLK and 48 MHz USB clock (HSE = 24 MHz)
+    MODIFY_REG(RCC->PLLCFGR,
+         RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ,
+         _VAL2FLD(RCC_PLLCFGR_PLLM, 12) | _VAL2FLD(RCC_PLLCFGR_PLLN, 192) | _VAL2FLD(RCC_PLLCFGR_PLLP, 0b10) | // PLLP = 6
+         RCC_PLLCFGR_PLLSRC_HSE | _VAL2FLD(RCC_PLLCFGR_PLLQ, 8) // PLLQ = 8
+    );
+    RCC->CR |= RCC_CR_PLLON; // enable PLL
+    while ((RCC->CR & RCC_CR_PLLRDY) == 0);
+
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_2WS); // Flash latency for 64 MHz
+
+    /* Set the highest APBx dividers to ensure safe clock transitions */
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, RCC_CFGR_PPRE1_DIV16);
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2, RCC_CFGR_PPRE2_DIV16);
+
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE, RCC_CFGR_HPRE_DIV1); // AHB = SYSCLK
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_SW, RCC_CFGR_SW_PLL); // Set PLL as sys clock
+    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, RCC_CFGR_PPRE1_DIV1); // APB1 = SYSCLK
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2, RCC_CFGR_PPRE2_DIV1); // APB2 = SYSCLK
+    RCC->CR &= ~RCC_CR_HSION; // turn off HSI
+}
+#endif
