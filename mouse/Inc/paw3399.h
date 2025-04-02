@@ -68,6 +68,7 @@ static void spi_init(void)
 
 	// SPI config
 	SPIx_CLK_ENABLE();
+	// CLOCK
 	SPIx->CR1 = SPI_CR1_SSM | SPI_CR1_SSI // software SS
 			| (0b001 << SPI_CR1_BR_Pos) // assumes PCLK2 = 32MHz. divide by 4 for 8MHz
 			| SPI_CR1_MSTR // master
