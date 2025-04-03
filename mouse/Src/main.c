@@ -34,15 +34,18 @@
 #include "config.h"
 #include "delay.h"
 #include "main.h"
+#include "feature_report.h"
 
 #define TIMEOUT_SECS 5 // seconds of holding buttons for programming mode
 
 // used in usb.c via extern in main.h
-volatile Usb_packet packet = { 0 }; // packet in progress will be sent next
+volatile Usb_packet packet = { 1,0,0,0,0 }; // packet in progress will be sent next
 uint8_t volatile ready = 0;
 uint8_t volatile sync = 0;
 uint8_t count = 0;
-Usb_packet last_packet = { 0 };
+Usb_packet last_packet = { 1,0,0,0,0 };
+volatile Feature_report feature_report_1 = {0};
+volatile uint8_t config_update = 0;
 
 static Config config_boot(void) {
 	// read button state on boot
@@ -219,6 +222,7 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 				}
 				mode = 0;
 				config_write(*cfg);
+				feature_report_1.words[0] = cfg;
 				ticks = 0;
 			}
 		} else {
@@ -241,7 +245,9 @@ int main(void) {
 	delay_init();
 	btn_whl_init();
 
+	// TODO not const maybe calls function each time
 	Config cfg = config_boot();
+	feature_report_1.words[0] = cfg;
 	const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
 	// 8000 to 1000, 2000, 4000
 	// 0, 1, 2, 3
@@ -270,6 +276,12 @@ int main(void) {
 	usb_wait_configured();
 
 	while (1) {
+
+		if (config_update == 1){
+			config_update = 0;
+
+			config_write(feature_report_1.words[0]);
+		}
 
 		// do not run until NAK or XFRC on EP1
 		if (sync != 1)
@@ -310,10 +322,10 @@ int main(void) {
 		delay_us(2);
 		(void) spi_recv(); // motion, not used
 		(void) spi_recv(); // observation, not used
-		packet.u8[2] = spi_recv(); // x lower 8 bits
-		packet.u8[3] = spi_recv(); // x upper 8 bits
-		packet.u8[4] = spi_recv(); // y lower 8 bits
-		packet.u8[5] = spi_recv(); // y upper 8 bits
+		packet.u8[3] = spi_recv(); // x lower 8 bits
+		packet.u8[4] = spi_recv(); // x upper 8 bits
+		packet.u8[5] = spi_recv(); // y lower 8 bits
+		packet.u8[6] = spi_recv(); // y upper 8 bits
 		const uint8_t squal = spi_recv(); // SQUAL
 		ss_high();
 

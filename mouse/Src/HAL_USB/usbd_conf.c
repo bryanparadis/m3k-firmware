@@ -162,11 +162,257 @@ void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
 }
 
 /**
+* @brief  USBD_DataOutStage
+*         Handle data OUT stage
+* @param  pdev: device instance
+* @param  epnum: endpoint index
+* @retval status
+*/
+USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef *pdev,
+                                        uint8_t epnum, uint8_t *pdata)
+{
+  USBD_EndpointTypeDef *pep;
+  USBD_StatusTypeDef ret;
+
+  if (epnum == 0U)
+  {
+    pep = &pdev->ep_out[0];
+
+    if (pdev->ep0_state == USBD_EP0_DATA_OUT)
+    {
+      if (pep->rem_length > pep->maxpacket)
+      {
+        pep->rem_length -= pep->maxpacket;
+
+        (void)USBD_CtlContinueRx(pdev, pdata, MIN(pep->rem_length, pep->maxpacket));
+      }
+      else
+      {
+        if ((pdev->pClass->EP0_RxReady != NULL) &&
+            (pdev->dev_state == USBD_STATE_CONFIGURED))
+        {
+          pdev->pClass->EP0_RxReady(pdev);
+        }
+        (void)USBD_CtlSendStatus(pdev);
+      }
+    }
+    else
+    {
+#if 0
+      if (pdev->ep0_state == USBD_EP0_STATUS_OUT)
+      {
+        /*
+         * STATUS PHASE completed, update ep0_state to idle
+         */
+        pdev->ep0_state = USBD_EP0_IDLE;
+        (void)USBD_LL_StallEP(pdev, 0U);
+      }
+#endif
+    }
+  }
+  else if ((pdev->pClass->DataOut != NULL) &&
+           (pdev->dev_state == USBD_STATE_CONFIGURED))
+  {
+    ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
+
+    if (ret != USBD_OK)
+    {
+      return ret;
+    }
+  }
+  else
+  {
+    /* should never be in this condition */
+    return USBD_FAIL;
+  }
+
+  return USBD_OK;
+}
+
+
+
+
+/**
   * @brief  DataOut Stage callback.
   * @param  hpcd: PCD handle
   * @param  epnum: Endpoint Number
   * @retval None
   */
+void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+{
+  USBD_LL_DataOutStage(hpcd->pData, epnum, hpcd->OUT_ep[epnum].xfer_buff);
+}
+
+#if 0 // from DFU!
+USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef *pdev,
+                                        uint8_t epnum, uint8_t *pdata)
+{
+  USBD_EndpointTypeDef *pep;
+  USBD_StatusTypeDef ret = USBD_OK;
+  uint8_t idx;
+
+  if (epnum == 0U)
+  {
+    pep = &pdev->ep_out[0];
+
+    if (pdev->ep0_state == USBD_EP0_DATA_OUT)
+    {
+      if (pep->rem_length > pep->maxpacket)
+      {
+        pep->rem_length -= pep->maxpacket;
+
+        (void)USBD_CtlContinueRx(pdev, pdata, MIN(pep->rem_length, pep->maxpacket));
+      }
+      else
+      {
+        /* Find the class ID relative to the current request */
+        switch (pdev->request.bmRequest & 0x1FU)
+        {
+          case USB_REQ_RECIPIENT_DEVICE:
+            /* Device requests must be managed by the first instantiated class
+               (or duplicated by all classes for simplicity) */
+            idx = 0U;
+            break;
+
+          case USB_REQ_RECIPIENT_INTERFACE:
+            idx = USBD_CoreFindIF(pdev, LOBYTE(pdev->request.wIndex));
+            break;
+
+          case USB_REQ_RECIPIENT_ENDPOINT:
+            idx = USBD_CoreFindEP(pdev, LOBYTE(pdev->request.wIndex));
+            break;
+
+          default:
+            /* Back to the first class in case of doubt */
+            idx = 0U;
+            break;
+        }
+
+        if (idx < USBD_MAX_SUPPORTED_CLASS)
+        {
+          /* Setup the class ID and route the request to the relative class function */
+          if (pdev->dev_state == USBD_STATE_CONFIGURED)
+          {
+            if (pdev->pClass[idx]->EP0_RxReady != NULL)
+            {
+              pdev->classId = idx;
+              pdev->pClass[idx]->EP0_RxReady(pdev);
+            }
+          }
+        }
+
+        (void)USBD_CtlSendStatus(pdev);
+      }
+    }
+  }
+  else
+  {
+    /* Get the class index relative to this interface */
+    idx = USBD_CoreFindEP(pdev, (epnum & 0x7FU));
+
+    if (((uint16_t)idx != 0xFFU) && (idx < USBD_MAX_SUPPORTED_CLASS))
+    {
+      /* Call the class data out function to manage the request */
+      if (pdev->dev_state == USBD_STATE_CONFIGURED)
+      {
+        if (pdev->pClass[idx]->DataOut != NULL)
+        {
+          pdev->classId = idx;
+          ret = (USBD_StatusTypeDef)pdev->pClass[idx]->DataOut(pdev, epnum);
+        }
+      }
+      if (ret != USBD_OK)
+      {
+        return ret;
+      }
+    }
+  }
+
+  return USBD_OK;
+}
+#endif
+
+#if 0 // from bootloader?
+/**
+* @brief  USBD_DataOutStage
+*         Handle data OUT stage
+* @param  pdev: device instance
+* @param  epnum: endpoint index
+* @retval status
+*/
+USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef *pdev,
+                                        uint8_t epnum, uint8_t *pdata)
+{
+  USBD_EndpointTypeDef *pep;
+  USBD_StatusTypeDef ret;
+
+  if (epnum == 0U)
+  {
+    pep = &pdev->ep_out[0];
+
+    if (pdev->ep0_state == USBD_EP0_DATA_OUT)
+    {
+      if (pep->rem_length > pep->maxpacket)
+      {
+        pep->rem_length -= pep->maxpacket;
+
+        (void)USBD_CtlContinueRx(pdev, pdata, MIN(pep->rem_length, pep->maxpacket));
+      }
+      else
+      {
+        if ((pdev->pClass->EP0_RxReady != NULL) &&
+            (pdev->dev_state == USBD_STATE_CONFIGURED))
+        {
+          pdev->pClass->EP0_RxReady(pdev);
+        }
+        (void)USBD_CtlSendStatus(pdev);
+      }
+    }
+    else
+    {
+#if 0
+      if (pdev->ep0_state == USBD_EP0_STATUS_OUT)
+      {
+        /*
+         * STATUS PHASE completed, update ep0_state to idle
+         */
+        pdev->ep0_state = USBD_EP0_IDLE;
+        (void)USBD_LL_StallEP(pdev, 0U);
+      }
+#endif
+    }
+  }
+  else if ((pdev->pClass->DataOut != NULL) &&
+           (pdev->dev_state == USBD_STATE_CONFIGURED))
+  {
+    ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
+
+    if (ret != USBD_OK)
+    {
+      return ret;
+    }
+  }
+  else
+  {
+    /* should never be in this condition */
+    return USBD_FAIL;
+  }
+
+  return USBD_OK;
+}
+
+#endif
+
+
+#if 0 // original
+/**
+  * @brief  DataOut Stage callback.
+  * @param  hpcd: PCD handle
+  * @param  epnum: Endpoint Number
+  * @retval None
+  */
+
+// TODO This could be a problem
 void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) // TODO: this does nothing?
 {
 //  USBD_LL_DataOutStage(hpcd->pData, epnum, hpcd->OUT_ep[epnum].xfer_buff);
@@ -232,6 +478,8 @@ void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) // TOD
 
 //  return USBD_OK;
 }
+
+#endif
 
 /**
   * @brief  DataIn Stage callback.

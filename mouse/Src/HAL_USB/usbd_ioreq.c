@@ -116,6 +116,28 @@ USBD_StatusTypeDef USBD_CtlContinueSendData(USBD_HandleTypeDef *pdev,
 }
 
 /**
+* @brief  USBD_CtlPrepareRx
+*         receive data on the ctl pipe
+* @param  pdev: device instance
+* @param  buff: pointer to data buffer
+* @param  len: length of data to be received
+* @retval status
+*/
+USBD_StatusTypeDef USBD_CtlPrepareRx(USBD_HandleTypeDef *pdev,
+                                     uint8_t *pbuf, uint32_t len)
+{
+  /* Set EP0 State */
+  pdev->ep0_state = USBD_EP0_DATA_OUT;
+  pdev->ep_out[0].total_length = len;
+  pdev->ep_out[0].rem_length = len;
+
+  /* Start the transfer */
+  (void)USBD_LL_PrepareReceive(pdev, 0U, pbuf, len);
+
+  return USBD_OK;
+}
+
+/**
 * @brief  USBD_CtlContinueRx
 *         continue receive data on the ctl pipe
 * @param  pdev: device instance

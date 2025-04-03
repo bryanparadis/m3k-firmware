@@ -42,11 +42,11 @@ extern "C" {
   * @{
   */
 #define HID_EPIN_ADDR                              0x81U
-#define HID_EPIN_SIZE                              0x06U
+#define HID_EPIN_SIZE                              0x07U
 
 #define USB_HID_CONFIG_DESC_SIZ                    34U
 #define USB_HID_DESC_SIZ                           9U
-#define HID_MOUSE_REPORT_DESC_SIZE                 69U
+#define HID_MOUSE_REPORT_DESC_SIZE                 96U
 
 #define HID_DESCRIPTOR_TYPE                        0x21U
 #define HID_REPORT_DESC                            0x22U
@@ -79,6 +79,7 @@ typedef enum
 {
   HID_IDLE = 0,
   HID_BUSY,
+  HID_SET_REPORT_PENDING,
 } HID_StateTypeDef;
 
 
@@ -88,6 +89,7 @@ typedef struct
   uint32_t IdleState;
   uint32_t AltSetting;
   HID_StateTypeDef state;
+  uint8_t set_report_buffer[32]; // Temporary buffer for Set_Report data
 } USBD_HID_HandleTypeDef;
 /**
   * @}
@@ -121,6 +123,7 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef *pdev, uint8_t *report,uint16_t l
 uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 uint8_t USBD_HID_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
+uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev);
 uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
 uint8_t *USBD_HID_GetFSCfgDesc(uint16_t *length);
 uint8_t *USBD_HID_GetHSCfgDesc(uint16_t *length);

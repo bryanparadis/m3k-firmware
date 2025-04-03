@@ -481,6 +481,15 @@ void OTG_HS_IRQHandler(void)
         (void)USB_ReadPacket(USBx, (uint8_t *)hpcd.Setup, 8U);
 ///USBD_ParseSetupRequest(&stps[istp++], (uint8_t *)hpcd.Setup);
         ep->xfer_count += (temp & USB_OTG_GRXSTSP_BCNT) >> 4;
+      }  else if (pktsts == STS_DATA_UPDT) // Handle OUT data
+      {
+        uint32_t bcnt = (temp & USB_OTG_GRXSTSP_BCNT) >> 4;
+        if (ep->xfer_buff && bcnt <= ep->xfer_len)
+        {
+          (void)USB_ReadPacket(USBx, ep->xfer_buff, bcnt);
+          ep->xfer_buff += bcnt;
+          ep->xfer_count += bcnt;
+        }
       }
       USB_UNMASK_INTERRUPT(hpcd.Instance, USB_OTG_GINTSTS_RXFLVL);
     }
