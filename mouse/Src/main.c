@@ -281,6 +281,8 @@ int main(void) {
 			config_update = 0;
 
 			config_write(feature_report_1.words[0]);
+
+			// TODO set configuration live
 		}
 
 		// do not run until NAK or XFRC on EP1
@@ -291,10 +293,13 @@ int main(void) {
 		// Testing delay by lifting mouse and holding button 1 while plugging in
 		// If the first input report is actually sent on 2nd poll with 1 NAK before it is good
 
-		//75 ok  1 poll
-		//77 ok  1 poll
-		//78 bad 2 polls
 
+		// TODO add FS delay
+		// TODO optimize and then adjust HS delay. Don't know possibly max loop length.
+		//75us ok  1 poll
+		//77us ok  1 poll
+		//78us bad 2 polls
+		//104us at 160MHz
 		delay_us(60);
 
         // frames to skip 0 = 8000Hz, 1 = 4000Hz, 3 = 2000Hz and 7 = 1000Hz
@@ -346,6 +351,7 @@ int main(void) {
 		if (hs_usb) // only run wheel code every 4 microframes
 			whl_count = (whl_count + 1) % 4;
 
+		// TODO add button swap here buy swapping the left and right button bits
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
