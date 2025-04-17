@@ -235,7 +235,7 @@ void usb_init(int hs_usb)
 	hpcd.Instance->GAHBCFG |= USB_OTG_GAHBCFG_GINT;
 	hpcd.Lock = HAL_UNLOCKED;
 
-	// This isn't the right value. WTF? CONST
+	// TODO This isn't the right value. WTF? CONST
 	fifo_space = (USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
 }
 
@@ -394,9 +394,6 @@ void OTG_HS_EP1_IN_IRQHandler(void)
   uint32_t USBx_BASE = (uint32_t)USBx;
 
 	if ((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_NAK) || (USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC)) {
-		 // | USB_OTG_DIEPINT_XFRC;
-		// skip frames to reduce hs_usb 8000Hz to 4000Hz, 2000Hz and 1000Hz
-
 		if((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_NAK)){
 			USBx_INEP(1)->DIEPINT = USB_OTG_DIEPINT_NAK;
 		}
@@ -404,15 +401,14 @@ void OTG_HS_EP1_IN_IRQHandler(void)
 		if((USBx_INEP(1)->DIEPINT & USB_OTG_DIEPINT_XFRC)){
 			USBx_INEP(1)->DIEPINT = USB_OTG_DIEPINT_XFRC;
 		}
-		// make main loop create a new packet
+		// setting this allows main loop to create a new packet
 		sync = 1;
 	}
+
 	if (ready == 1 ) {
 		if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
 			// TODO I can't use fifospace as it isn't correct. Hardcoded works. Constant issue probably
 			if((USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) == 0x174U) {
-				// we don't want to send next when it hasn't been updated
-
 						// set up transfer size
 						MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
 								USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
@@ -420,7 +416,6 @@ void OTG_HS_EP1_IN_IRQHandler(void)
 						// enable endpoint
 						USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
 								| USB_OTG_DIEPCTL_EPENA;
-
 
 						// write to fifo
 						USBx_DFIFO(1) = packet.u32[0];
@@ -431,39 +426,20 @@ void OTG_HS_EP1_IN_IRQHandler(void)
 	}
 }
 
+// TODO for some reason EP1 interrupts aren't making it to this handler
 void OTG_HS_IRQHandler(void)
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
 
-  if (USBD_Device.dev_state == USBD_STATE_CONFIGURED) {
-	//USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA;
-	//USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_EPENA;
-
-  }
-
+    // TODO This needs some investigation.
   	// Handle SOF
 	if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_SOF) != 0) {
+		// This was |= and returning which would have been affecting more than just pending SOFs
 		USB_OTG_HS->GINTSTS = USB_OTG_GINTSTS_SOF;
 
-		/*
-		USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;
-		USBx_DEVICE->DAINTMSK |= 0x10003U;
-
-		MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
-				USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
-				_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
-		// enable endpoint
-		USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
-				| USB_OTG_DIEPCTL_EPENA;
-	*/
-		//return;
-
+	    //return;
 	}
-
-	//if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_IEPINT) != 0) {
-
-
 
   uint32_t i, ep_intr, epint, epnum;
   uint32_t fifoemptymsk, temp;
@@ -582,15 +558,7 @@ void OTG_HS_IRQHandler(void)
       USBx_DEVICE->DAINTMSK |= 0x10003U;
       USBx_DEVICE->DOEPMSK |= USB_OTG_DOEPMSK_STUPM | USB_OTG_DOEPMSK_XFRCM;
       USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;// | USB_OTG_DIEPMSK_ITTXFEMSK;
-#if 0
-		MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
-				USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
-				_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
-		// enable endpoint
-		USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK
-				| USB_OTG_DIEPCTL_EPENA;
-#endif
-		USBx_DEVICE->DCFG &= ~USB_OTG_DCFG_DAD; /* Set Default Address to 0 */
+	  USBx_DEVICE->DCFG &= ~USB_OTG_DCFG_DAD; /* Set Default Address to 0 */
       (void)USB_EP0_OutStart(hpcd.Instance); /* setup EP0 to receive SETUP packets */
       __HAL_PCD_CLEAR_FLAG(&hpcd, USB_OTG_GINTSTS_USBRST);
     }

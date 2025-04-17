@@ -290,10 +290,6 @@ int main(void) {
 			continue;
 		sync = 0;
 
-		// Testing delay by lifting mouse and holding button 1 while plugging in
-		// If the first input report is actually sent on 2nd poll with 1 NAK before it is good
-
-
 		// TODO add FS delay
 		// TODO optimize and then adjust HS delay. Don't know possibly max loop length.
 		//75us ok  1 poll
