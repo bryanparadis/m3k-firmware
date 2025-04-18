@@ -52,6 +52,7 @@ static Config config_boot(void) {
 	uint8_t btn_boot = 0;
 	btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
 	btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
+	btn_boot |= (!(MMB_NO_PORT->IDR & MMB_NO_PIN)) << 2;
 
 	// update config depending on initial buttons
 	delay_ms(25); // delay in case power bounces on boot
@@ -72,6 +73,14 @@ static Config config_boot(void) {
 			anim_eight(1);
 		else
 			anim_one(1);
+		break;
+	case 0b111: // LMB, RMB and MMB pressed
+		cfg ^= CONFIG_SWAP_LMB_AND_RMB;
+		config_write(cfg);
+		if (cfg & CONFIG_SWAP_LMB_AND_RMB)
+			anim_rightslow_pause_leftslow(1);
+		else
+			anim_leftslow_pause_rightslow(1);
 		break;
 	}
 
@@ -347,7 +356,6 @@ int main(void) {
 		if (hs_usb) // only run wheel code every 4 microframes
 			whl_count = (whl_count + 1) % 4;
 
-		// TODO add button swap here buy swapping the left and right button bits
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
@@ -356,6 +364,13 @@ int main(void) {
 		// TODO is this necessary?
 		// btn_unmasked saves the unprocessed button data to compare to next loop
 		btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_prev);
+
+		// Swap LMB (bit 0) and RMB (bit 1) in btn_unmasked
+		if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
+			btn_unmasked = (btn_unmasked & ~0x03) |           // Keep all bits except 0 and 1
+			               ((btn_unmasked & 0x01) << 1) |     // Move LMB (bit 0) to bit 1
+			               ((btn_unmasked & 0x02) >> 1);      // Move RMB (bit 1) to bit 0
+		}
 
 		// mode processing returns btn or 0x00U if you are changing settings
 	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_prev, squal);
@@ -396,7 +411,6 @@ int main(void) {
 
 #endif
 
-		// TODO maybe critical section unnecessary now
 		__disable_irq();
 		// check to see if there is new data
 		if ( packet.btn != last_packet.btn || packet.x || packet.y || packet.whl ) {

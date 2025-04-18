@@ -86,6 +86,8 @@ struct Xy anim_read(void);
 #define anim_downup_pause(reps) anim_add((reps), 3, (struct Anim[]){DOWN, UP, PAUSE})
 #define anim_leftright_pause(reps) anim_add((reps), 3, (struct Anim[]){LEFT, RIGHT, PAUSE})
 #define anim_rightleft_pause(reps) anim_add((reps), 3, (struct Anim[]){RIGHT, LEFT, PAUSE})
+#define anim_leftslow_pause_rightslow(reps) anim_add((reps), 3, (struct Anim[]){LEFT_SLOW, PAUSE, RIGHT_SLOW})
+#define anim_rightslow_pause_leftslow(reps) anim_add((reps), 3, (struct Anim[]){RIGHT_SLOW, PAUSE, LEFT_SLOW})
 
 #define anim_diag(reps) anim_add((reps), 1, (struct Anim[]){ANIM(300, SPEED_SLOW, SPEED_SLOW)})
 
