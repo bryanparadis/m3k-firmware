@@ -230,7 +230,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
 	0x06, 0x00, 0xFF,              // USAGE_PAGE (Vendor-Defined 1) - Vendor-defined context (0xFF00)
 	0x09, 0x01,                    // USAGE (Vendor Usage 1) - Custom usage ID for this collection (0x01)
 	0xA1, 0x01,                    // COLLECTION (Application) - Starts an Application collection for config
-	0x85, 0x02,                    //   REPORT_ID (2) - Assigns Report ID 2 to this feature report (0x02)
+	0x85, 0x03,                    //   REPORT_ID (3) - Assigns Report ID 3 to this feature report (0x03)
 	0x09, 0x02,                    //   USAGE (Vendor Usage 2) - Custom usage ID for config data (0x02)
 	0x15, 0x00,                    //   LOGICAL_MINIMUM (0) - Config values start at 0
 	0x27, 0xFF, 0xFF, 0x00, 0x00,  //   LOGICAL_MAXIMUM (65535) - Config values up to 65535 (16-bit unsigned)
@@ -487,8 +487,8 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
     switch (req->bRequest)
     {
     case HID_REQ_SET_REPORT:
-        // Host is sending a report (e.g., config data for Report ID 2)
-        if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x02)
+        // Host is sending a report (e.g., config data for Report ID 3)
+        if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
         {
             // Feature report (0x03), Report ID 2 (0x02)
             // Prepare to receive 64 bytes (excluding Report ID)
@@ -497,22 +497,21 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
         break;
 
     case HID_REQ_GET_REPORT:
-		// Host is requesting a report (e.g., read config for Report ID 2)
-		if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x02)
+		// Host is requesting a report (e.g., read config for Report ID 3)
+		if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
 		{
 			hhid->state = HID_SET_REPORT_PENDING;
 
 			static uint8_t report_buffer[33];
 
-			report_buffer[0] = 0x02U;
+			report_buffer[0] = 0x03U;
 
 			for(uint8_t i = 0; i < 32; i++) {
 				report_buffer[i+1] = feature_report_1.bytes[i];
 			}
 
-
-			// Feature report (0x03), Report ID 2 (0x02)
-			// Send 64 bytes (excluding Report ID, host adds it)
+			// Feature report (0x03), Report ID 3 (0x03)
+			// Send Report ID + 32 bytes of config
 			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 33);
 		}
 		break;
