@@ -225,12 +225,20 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
 	0x95, 0x02,                    //   REPORT_COUNT (2) - 2 fields (X and Y)
 	0x81, 0x06,                    //   INPUT (Data,Var,Rel) - 4 bytes of variable, relative X/Y data
 	0xC0,                          // END_COLLECTION - Closes the mouse Application collection
+	// 71 Bytes
 
 	// Vendor-Defined Collection (Feature Report with Report ID 2)
 	0x06, 0x00, 0xFF,              // USAGE_PAGE (Vendor-Defined 1) - Vendor-defined context (0xFF00)
 	0x09, 0x01,                    // USAGE (Vendor Usage 1) - Custom usage ID for this collection (0x01)
 	0xA1, 0x01,                    // COLLECTION (Application) - Starts an Application collection for config
-	0x85, 0x03,                    //   REPORT_ID (3) - Assigns Report ID 3 to this feature report (0x03)
+    0x85, 0x02,                    //   REPORT_ID (2) Get version
+    0x09, 0x01,                    //   USAGE (Vendor Usage 1)
+    0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
+    0x26, 0xff, 0x00,              //   LOGICAL_MAXIMUM (255)
+    0x75, 0x08,                    //   REPORT_SIZE (8)
+    0x95, 0x40,                    //   REPORT_COUNT (64)
+    0xb1, 0x02,                    //   FEATURE (Data,Var,Abs)
+	0x85, 0x03,                    //   REPORT_ID (3) Get and set config
 	0x09, 0x02,                    //   USAGE (Vendor Usage 2) - Custom usage ID for config data (0x02)
 	0x15, 0x00,                    //   LOGICAL_MINIMUM (0) - Config values start at 0
 	0x27, 0xFF, 0xFF, 0x00, 0x00,  //   LOGICAL_MAXIMUM (65535) - Config values up to 65535 (16-bit unsigned)
@@ -238,6 +246,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
 	0x95, 0x10,                    //   REPORT_COUNT (32) - 32 fields (32 x 16 bits = 64 bytes)
 	0xB1, 0x02,                    //   FEATURE (Data,Var,Abs) - 64 bytes of variable, absolute config data
 	0xC0                           // END_COLLECTION - Closes the vendor-defined Application collection
+	// 40 Bytes
 };
 
 #if 0 // OLD 5 button descriptor
