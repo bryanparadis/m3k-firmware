@@ -25,7 +25,8 @@
 
 #define M3K_USB_MFG "Zaunkoenig"
 #define M3K_USB_NAME "M3K"
-#define M3K_FW_VERSION " firmware parawizard new v0.7"
+#define M3K_FW_VERSION "parawizard new v0.7"
+#define M3K_FW_VERSION_FORMATTED " firmware " M3K_FW_VERSION
 #define M3K_USB_PID 0xA462
 #define M3K_USB_VID 0x0483
 

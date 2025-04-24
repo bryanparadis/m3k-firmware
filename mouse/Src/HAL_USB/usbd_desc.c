@@ -244,9 +244,9 @@ static void Get_SerialNum(void)
     IntToUnicode (deviceserial1, &USBD_StringSerial[18] ,4);
   }
   // append firmware version
-  for (int i = 0; i < sizeof(M3K_FW_VERSION) - 1; i++)
+  for (int i = 0; i < sizeof(M3K_FW_VERSION_FORMATTED) - 1; i++)
   {
-	USBD_StringSerial[26 + 2*i] = M3K_FW_VERSION[i];
+	USBD_StringSerial[26 + 2*i] = M3K_FW_VERSION_FORMATTED[i];
 	USBD_StringSerial[26 + 2*i + 1] = 0U;
   }
 }
