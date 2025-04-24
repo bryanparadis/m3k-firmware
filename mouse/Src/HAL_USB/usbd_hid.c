@@ -47,6 +47,7 @@ EndBSPDependencies */
 #include "feature_report.h"
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
+#include "m3k_resource.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -506,12 +507,25 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
         break;
 
     case HID_REQ_GET_REPORT:
-		// Host is requesting a report (e.g., read config for Report ID 3)
-		if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
+    	if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x02)
 		{
 			hhid->state = HID_SET_REPORT_PENDING;
 
-			static uint8_t report_buffer[33];
+		    uint8_t report_buffer[65];
+			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
+
+			report_buffer[0] = 0x02U;
+			memcpy(&report_buffer[1], M3K_FW_VERSION, sizeof(M3K_FW_VERSION)); // Copy including null terminator
+
+			// Send Report ID + 64 bytes of firmware version
+			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 65);
+		}
+		else if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
+		{
+			hhid->state = HID_SET_REPORT_PENDING;
+
+			uint8_t report_buffer[33];
+			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
 
 			report_buffer[0] = 0x03U;
 
@@ -519,7 +533,6 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 				report_buffer[i+1] = feature_report_1.bytes[i];
 			}
 
-			// Feature report (0x03), Report ID 3 (0x03)
 			// Send Report ID + 32 bytes of config
 			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 33);
 		}
