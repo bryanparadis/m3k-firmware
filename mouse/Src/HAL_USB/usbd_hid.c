@@ -500,6 +500,7 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
         // Host is sending a report (e.g., config data for Report ID 3)
         if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
         {
+        	hhid->state = HID_SET_REPORT_PENDING;
             // Feature report (0x03), Report ID 2 (0x02)
             // Prepare to receive 64 bytes (excluding Report ID)
             USBD_CtlPrepareRx(pdev, hhid->set_report_buffer, 33);
@@ -509,8 +510,6 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
     case HID_REQ_GET_REPORT:
     	if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x02)
 		{
-			hhid->state = HID_SET_REPORT_PENDING;
-
 		    uint8_t report_buffer[65];
 			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
 
@@ -522,8 +521,6 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 		}
 		else if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
 		{
-			hhid->state = HID_SET_REPORT_PENDING;
-
 			uint8_t report_buffer[33];
 			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
 
