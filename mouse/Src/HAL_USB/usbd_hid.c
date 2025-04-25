@@ -44,10 +44,11 @@
 EndBSPDependencies */
 
 /* Includes ------------------------------------------------------------------*/
-#include "feature_report.h"
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
 #include "m3k_resource.h"
+#include "config.h"
+#include "delay.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -244,7 +245,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
 	0x15, 0x00,                    //   LOGICAL_MINIMUM (0) - Config values start at 0
 	0x27, 0xFF, 0xFF, 0x00, 0x00,  //   LOGICAL_MAXIMUM (65535) - Config values up to 65535 (16-bit unsigned)
 	0x75, 0x10,                    //   REPORT_SIZE (16) - Each config field is 16 bits
-	0x95, 0x10,                    //   REPORT_COUNT (32) - 32 fields (32 x 16 bits = 64 bytes)
+	0x95, 0x01,                    //   REPORT_COUNT (1)
 	0xB1, 0x02,                    //   FEATURE (Data,Var,Abs) - 64 bytes of variable, absolute config data
 	0xC0                           // END_COLLECTION - Closes the vendor-defined Application collection
 	// 40 Bytes
@@ -527,12 +528,18 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 
 			report_buffer[0] = 0x03U;
 
-			for(uint8_t i = 0; i < 32; i++) {
-				report_buffer[i+1] = feature_report_1.bytes[i];
+			// Read config
+			Config cfg = config_read();
+			uint8_t cfg_bytes[2];
+			cfg_bytes[0] = cfg & 0xFF;        // Low byte
+			cfg_bytes[1] = (cfg >> 8) & 0xFF; // High byte
+
+			for(uint8_t i = 0; i < 2; i++) {
+				report_buffer[i+1] = cfg_bytes[i];
 			}
 
 			// Send Report ID + 32 bytes of config
-			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 33);
+			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 3);
 		} else {
 	      USBD_CtlError(pdev, req);
 	      ret = USBD_FAIL;
@@ -703,14 +710,27 @@ uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
 
     if (hhid->state == HID_SET_REPORT_PENDING)
     {
+    	uint8_t cfg_bytes[2];
         // Data has been received into hhid->set_report_buffer
         // Copy to feature_report.words (32 x 16-bit)
-        for (uint8_t i = 1; i < 33; i++)
+        for (uint8_t i = 1; i < 3; i++)
         {
-            feature_report_1.bytes[i - 1] = hhid->set_report_buffer[i];
-            config_update = 1;
+        	cfg_bytes[i - 1] = hhid->set_report_buffer[i];
         }
+
+        Config cfg = ((uint16_t)cfg_bytes[1] << 8) | cfg_bytes[0];
+
+        if (cfg == 0xFFFF){
+          config_write(config_default);
+        } else {
+          // Write config
+          config_write(cfg);
+        }
+
         hhid->state = HID_IDLE;
+
+        // TODO need to wait before reset? WebHID is erroring out
+        NVIC_SystemReset();
     }
 
     return (uint8_t)USBD_OK;

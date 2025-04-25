@@ -34,7 +34,6 @@
 #include "config.h"
 #include "delay.h"
 #include "main.h"
-#include "feature_report.h"
 
 #define TIMEOUT_SECS 5 // seconds of holding buttons for programming mode
 
@@ -44,7 +43,6 @@ uint8_t volatile ready = 0;
 uint8_t volatile sync = 0;
 uint8_t count = 0;
 Usb_packet last_packet = {{1,0,0,0,0}};
-volatile Feature_report feature_report_1 = {0};
 volatile uint8_t config_update = 0;
 
 static Config config_boot(void) {
@@ -231,7 +229,6 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 				}
 				mode = 0;
 				config_write(*cfg);
-				feature_report_1.words[0] = cfg;
 				ticks = 0;
 			}
 		} else {
@@ -256,7 +253,6 @@ int main(void) {
 
 	// TODO not const maybe calls function each time
 	Config cfg = config_boot();
-	feature_report_1.words[0] = cfg;
 	const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
 	// 8000 to 1000, 2000, 4000
 	// 0, 1, 2, 3
@@ -285,15 +281,6 @@ int main(void) {
 	usb_wait_configured();
 
 	while (1) {
-
-		if (config_update == 1){
-			config_update = 0;
-
-			config_write(feature_report_1.words[0]);
-
-			// TODO set configuration live
-		}
-
 		// do not run until NAK or XFRC on EP1
 		if (sync != 1)
 			continue;
