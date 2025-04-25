@@ -497,13 +497,14 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
     switch (req->bRequest)
     {
     case HID_REQ_SET_REPORT:
-        // Host is sending a report (e.g., config data for Report ID 3)
         if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
         {
         	hhid->state = HID_SET_REPORT_PENDING;
-            // Feature report (0x03), Report ID 2 (0x02)
-            // Prepare to receive 64 bytes (excluding Report ID)
+
             USBD_CtlPrepareRx(pdev, hhid->set_report_buffer, 33);
+        } else {
+          USBD_CtlError(pdev, req);
+          ret = USBD_FAIL;
         }
         break;
 
@@ -532,7 +533,10 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 
 			// Send Report ID + 32 bytes of config
 			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 33);
-		}
+		} else {
+	      USBD_CtlError(pdev, req);
+	      ret = USBD_FAIL;
+	    }
 		break;
 
     case HID_REQ_SET_PROTOCOL:
