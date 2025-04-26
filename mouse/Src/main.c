@@ -107,7 +107,6 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 	// frames_to_skip 3 = 2000Hz = 40000/(3+1) = 10000 timeout ticks
 	// frames_to_skip 7 = 1000Hz = 40000/(7+1) =  5000 timeout ticks
 	const int timeout_ticks = TIMEOUT_SECS * (hs ? (8000 /(*skip + 1)) : 1000);
-	//const int timeout_ticks = hs ? (40000 / (*skip + 1)) : 1000;
 
 	// typically squal in 60s for lifted 3399.
 	const int SQUAL_THRESH = 75;
@@ -253,14 +252,13 @@ int main(void) {
 
 	// TODO not const maybe calls function each time
 	Config cfg = config_boot();
+	// TODO if we don't reset after web config change the hs_usb could be false but we could be set to hs_usb?
 	const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
 	// 8000 to 1000, 2000, 4000
 	// 0, 1, 2, 3
 	// 0, 1, 3, 7 frames to skip
     int frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
-	//int frames_to_skip = 0;
     int frame_counter = 0;
-     // packet that was sent last
 
 	usb_init(hs_usb);
 	// frames_to_skip = 0 = 8000Hz = 8 / (0 + 1)  = 8 animation_scaling
