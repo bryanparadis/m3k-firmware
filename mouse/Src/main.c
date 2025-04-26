@@ -270,7 +270,7 @@ int main(void) {
 	spi_init();
 	paw3399_init(cfg);
 
-	uint8_t btn_prev = 0;
+	uint8_t btn_unmasked_prev = 0;
 	uint8_t btn_unmasked = 0;
 	int whl_lastlast = whl_read();
 	int whl_last = whl_lastlast;
@@ -308,8 +308,8 @@ int main(void) {
 			}
 		}
 
-		// reset packet
-		// packet.btn = 0;  You need buffer btn data to stay for btn_prev
+		// Reset packet
+		packet.btn = 0;
 		packet.whl = 0;
 		packet.x = 0;
 		packet.y = 0;
@@ -347,23 +347,23 @@ int main(void) {
 		const uint16_t btn_raw = btn_read();
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
-		// TODO can this move to the end of the loop? It should replace btn_prev or something.
-		btn_prev = btn_unmasked;
-		// TODO is this necessary?
-		// btn_unmasked saves the unprocessed button data to compare to next loop
-		btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_prev);
+
+		// Save last loop's btn_unmasked
+		btn_unmasked_prev = btn_unmasked;
+		btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_unmasked_prev);
 
 		// Swap LMB (bit 0) and RMB (bit 1) in btn_unmasked
 		if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
 			btn_unmasked = (btn_unmasked & ~0x03) |           // Keep all bits except 0 and 1
-			               ((btn_unmasked & 0x01) << 1) |     // Move LMB (bit 0) to bit 1
-			               ((btn_unmasked & 0x02) >> 1);      // Move RMB (bit 1) to bit 0
+			               ((btn_unmasked & 0x01) << 1) |     // Move LMB (bit 0) to RMB (bit 1)
+			               ((btn_unmasked & 0x02) >> 1);      // Move RMB (bit 1) to LMB (bit 0)
 		}
 
-		// mode processing returns btn or 0x00U if you are changing settings
-	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_prev, squal);
+		// All buttons are ignored when you are changing settings on the mouse directly
+		// mode_process returns btn_unmasked during normal use and 0x00 when changing settings
+	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_unmasked_prev, squal);
 
-		// animation stuff
+		// Add animation x and y data
 		const struct Xy a = anim_read(); // returns 0 if no animation left
 		packet.x += a.x;
 		packet.y += a.y;
