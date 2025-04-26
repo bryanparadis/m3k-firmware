@@ -43,7 +43,6 @@ uint8_t volatile ready = 0;
 uint8_t volatile sync = 0;
 uint8_t count = 0;
 Usb_packet last_packet = {{1,0,0,0,0}};
-volatile uint8_t config_update = 0;
 
 static Config config_boot(void) {
 	// read button state on boot
