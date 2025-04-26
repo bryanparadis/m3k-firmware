@@ -286,13 +286,16 @@ int main(void) {
 			continue;
 		sync = 0;
 
-		// TODO add FS delay
 		// TODO optimize and then adjust HS delay. Don't know possibly max loop length.
 		//75us ok  1 poll
 		//77us ok  1 poll
 		//78us bad 2 polls
 		//104us at 160MHz
-		delay_us(60);
+		if (hs_usb) {
+			delay_us(60);
+		} else {
+			delay_us(935);
+		}
 
         // frames to skip 0 = 8000Hz, 1 = 4000Hz, 3 = 2000Hz and 7 = 1000Hz
 		if (frames_to_skip != 0){
@@ -362,41 +365,10 @@ int main(void) {
 		// mode processing returns btn or 0x00U if you are changing settings
 	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_prev, squal);
 
-#if 1
 		// animation stuff
 		const struct Xy a = anim_read(); // returns 0 if no animation left
 		packet.x += a.x;
 		packet.y += a.y;
-#endif
-
-		// testing code that checks for dropping frames
-#if 0
-		if (count == 0) {
-			packet.x = -100;
-			packet.y = 0;
-			count ++;
-		} else {
-			packet.x = 100;
-		    packet.y = 0;
-		    count = 0;
-		}
-#endif
-
-#if 0
-		// testing code that replaces btn with a counter 1-4 on each poll
-		// counter starts at 0 but we want to do 1-4 on this one
-		if (count == 0){
-			count = 1;
-		}
-
-		packet.btn = count;
-		if(count == 4){
-			count = 1;
-		} else {
-			count++;
-		}
-
-#endif
 
 		__disable_irq();
 		// check to see if there is new data
