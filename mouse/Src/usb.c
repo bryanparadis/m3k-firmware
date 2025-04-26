@@ -31,7 +31,6 @@
 
 PCD_HandleTypeDef hpcd;
 USBD_HandleTypeDef USBD_Device;
-uint32_t fifo_space;
 
 static void FlushRxFifo(USB_OTG_GlobalTypeDef *USBx)
 {
@@ -234,9 +233,6 @@ void usb_init(int hs_usb)
 	HAL_Delay(3);
 	hpcd.Instance->GAHBCFG |= USB_OTG_GAHBCFG_GINT;
 	hpcd.Lock = HAL_UNLOCKED;
-
-	// TODO This isn't the right value. WTF? CONST
-	fifo_space = (USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
 }
 
 void usb_wait_configured(void)
@@ -427,6 +423,8 @@ void OTG_HS_EP1_IN_IRQHandler(void)
 }
 
 // TODO for some reason EP1 interrupts aren't making it to this handler
+// I figure it might be something to do with a macro that is disabled GINTSTS
+// Tried all layers of interrupt hierarchy, disabling EP1 in vector table and more
 void OTG_HS_IRQHandler(void)
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
