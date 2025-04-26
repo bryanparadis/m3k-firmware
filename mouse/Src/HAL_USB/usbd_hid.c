@@ -48,7 +48,6 @@ EndBSPDependencies */
 #include "usbd_ctlreq.h"
 #include "m3k_resource.h"
 #include "config.h"
-#include "delay.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -251,100 +250,6 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
 	// 40 Bytes
 };
 
-#if 0 // OLD 5 button descriptor
-__ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __ALIGN_END = {
-	0x05, 0x01,             // Usage Page (Generic Desktop)
-	0x09, 0x02,             // Usage (Mouse)
-	0xA1, 0x01,             // Collection (Application)
-	0x05, 0x09,             //   Usage Page (Button)
-	0x19, 0x01,             //   Usage Minimum (Button #1)
-	0x29, 0x05,             //   Usage Maximum (Button #5)
-	0x15, 0x00,             //   Logical Minimum (0)
-	0x25, 0x01,             //   Logical Maximum (1)
-	0x95, 0x05,             //   Report Count (5) //5 buttons 5 bits
-	0x75, 0x01,             //   Report Size (1)
-	0x81, 0x02,             //   Input (Data, Variable, Absolute)
-	0x95, 0x01,             //   Report Count (1)
-	0x75, 0x03,             //   Report Size (3) // 3 bits padding
-	0x81, 0x03,             //   Input (Constant) // Byte 1
-
-	0x05, 0x01,             //   Usage Page (Generic Desktop)
-
-	0x09, 0x38,             //   Usage (Wheel)
-	0x15, 0x81,             //   Logical Minimum (-127)
-	0x25, 0x7F,             //   Logical Maximum (127)
-	0x35, 0x81,             //   Physical Minimum (-127)
-	0x45, 0x7F,             //   Physical Maximum (127)
-	0x75, 0x08,             //   Report Size (8)
-	0x95, 0x01,             //   Report Count (1)
-	0x81, 0x06,             //   Input (Data, Variable, Relative) // Byte 2
-
-	0x09, 0x30,             //   Usage (X)
-	0x09, 0x31,             //   Usage (Y)
-	0x16, 0x01, 0x80,       //   Logical Minimum (-32,767)
-	0x26, 0xFF, 0x7F,       //   Logical Maximum (32,767)
-	0x36, 0x01, 0x80,       //   Physical Minimum (-32,767)
-	0x46, 0xFF, 0x7F,       //   Physical Maximum (32,767)
-	0x75, 0x10,             //   Report Size (16),
-	0x95, 0x02,             //   Report Count (2),
-	0x81, 0x06,             //   Input (Data, Variable, Relative) // Byte 3-6
-
-	0xC0                    // End Collection
-};
-#endif
-
-//  0x05,   0x01,
-//  0x09,   0x02,
-//  0xA1,   0x01,
-//  0x09,   0x01,
-//
-//  0xA1,   0x00,
-//  0x05,   0x09,
-//  0x19,   0x01,
-//  0x29,   0x03,
-//
-//  0x15,   0x00,
-//  0x25,   0x01,
-//  0x95,   0x03,
-//  0x75,   0x01,
-//
-//  0x81,   0x02,
-//  0x95,   0x01,
-//  0x75,   0x05,
-//  0x81,   0x01,
-//
-//  0x05,   0x01,
-//  0x09,   0x30,
-//  0x09,   0x31,
-//  0x09,   0x38,
-//
-//  0x15,   0x81,
-//  0x25,   0x7F,
-//  0x75,   0x08,
-//  0x95,   0x03,
-//
-//  0x81,   0x06,
-//  0xC0,   0x09,
-//  0x3c,   0x05,
-//  0xff,   0x09,
-//
-//  0x01,   0x15,
-//  0x00,   0x25,
-//  0x01,   0x75,
-//  0x01,   0x95,
-//
-//  0x02,   0xb1,
-//  0x22,   0x75,
-//  0x06,   0x95,
-//  0x01,   0xb1,
-//
-//  0x01,   0xc0
-//};
-
-/**
-  * @}
-  */
-
 /** @defgroup USBD_HID_Private_Functions
   * @{
   */
@@ -383,67 +288,8 @@ uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
     /* Open EP IN */
   (void)USBD_LL_OpenEP(pdev, HID_EPIN_ADDR, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
-#if 0
-  PCD_HandleTypeDef *hpcd = pdev->pData;
-  USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
-  uint32_t USBx_BASE = (uint32_t)USBx;
-
-  USB_OTG_EPTypeDef *ep;
-
-  ep = &hpcd->IN_ep[1];
-
-  uint32_t epnum = (uint32_t)ep->num;
-
-  __HAL_LOCK(hpcd);
-    USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK));
-
-    if ((USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_USBAEP) == 0U)
-    {
-      USBx_INEP(epnum)->DIEPCTL |= (ep->maxpacket & USB_OTG_DIEPCTL_MPSIZ) |
-                                   ((uint32_t)ep->type << 18) | (epnum << 22) |
-                                   USB_OTG_DIEPCTL_SD0PID_SEVNFRM |
-                                   USB_OTG_DIEPCTL_USBAEP;
-    }
-    __HAL_UNLOCK(hpcd);
-#endif
 
   pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 1U;
-
-
-
-
-#if 0
-  PCD_HandleTypeDef *hpcd = pdev->pData;
-  USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
-  uint32_t USBx_BASE = (uint32_t)USBx;
-/*
-	MODIFY_REG(USBx_INEP(1)->DIEPTSIZ,
-			USB_OTG_DIEPTSIZ_PKTCNT | USB_OTG_DIEPTSIZ_XFRSIZ,
-			_VAL2FLD(USB_OTG_DIEPTSIZ_PKTCNT, 1) | _VAL2FLD(USB_OTG_DIEPTSIZ_XFRSIZ, HID_EPIN_SIZE));
-	// enable endpoint
-	USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA;
-*/
-	// Step 1: Configure as Interrupt endpoint
-	USBx_INEP(1)->DIEPCTL = (3U << 18)  // EPTYP = Interrupt
-						   | (64U << 0) // MPSIZ = 64 bytes
-						   | (1U << 15) // USBAEP = 1
-						   | (1 << 22) // TXFNUM TXFIFO 1
-						   | USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
-
-	 // Step 2: Set transfer parameters to avoid ZLP
-	 USBx_INEP(1)->DIEPTSIZ = (1U << 19) // PKTCNT = 0
-							| (0U << 21) // MCNT = 0 (if applicable)
-							| (6U << 0); // XFRSIZ = 0
-
-	USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (1 & EP_ADDR_MSK));
-
-	USBx_INEP(1)->DIEPCTL |= USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA;
-
-	USBx_DEVICE->DIEPMSK |=  USB_OTG_DIEPMSK_NAKM | USB_OTG_DIEPMSK_XFRCM;
-	//USBx_DEVICE->DAINTMSK |= 0x10003U;
-
-	//USBx->GINTMSK |= USB_OTG_GINTMSK_IEPINT;
-#endif
 
   hhid->state = HID_IDLE;
 
