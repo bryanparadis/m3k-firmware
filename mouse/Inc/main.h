@@ -40,5 +40,7 @@ static_assert(sizeof(Usb_packet) == 2*sizeof(uint32_t), "Usb_packet wrong size")
 extern volatile Usb_packet packet;
 extern volatile uint8_t ready;
 extern volatile uint8_t sync;
+extern volatile uint8_t update_cfg;
+extern volatile uint8_t cfg_bytes[5];
 
 #endif /* MAIN_H_ */

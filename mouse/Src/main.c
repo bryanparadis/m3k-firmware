@@ -41,6 +41,8 @@
 volatile Usb_packet packet = {{1,0,0,0,0}}; // packet in progress will be sent next
 uint8_t volatile ready = 0;
 uint8_t volatile sync = 0;
+uint8_t volatile update_cfg = 0;
+uint8_t volatile cfg_bytes[5];
 uint8_t count = 0;
 Usb_packet last_packet = {{1,0,0,0,0}};
 
@@ -278,7 +280,41 @@ int main(void) {
 	usb_wait_configured();
 
 	while (1) {
-		// TODO If config is updated update all settings live
+		if (update_cfg) {
+			update_cfg = 0;
+
+			Config new_cfg = ((uint16_t)cfg_bytes[1] << 8) | cfg_bytes[0];
+
+	        // Factory reset if last two bytes are both 0xFF
+	        if (cfg_bytes[2] == 0xFF && cfg_bytes[3] == 0xFF){
+	          config_write(config_default);
+	        // No need to update cfg if it's the same
+	        } else if (new_cfg == cfg) {
+	        	continue;
+	        } else {
+	          // Limit DPI to max of 399 == 20000 dpi
+	          if ((new_cfg & CONFIG_DPI) > 399) {
+	        	  new_cfg = (new_cfg & (~CONFIG_DPI_Msk)) | 399;
+	          }
+
+	          config_write(new_cfg);
+	          cfg = new_cfg;
+	        }
+
+	        // If USB Speed changed we must reset
+	        // Values in comparison are inverse so == not !=
+	        if (hs_usb == (cfg & CONFIG_HS_USB)){
+	          // Delay to let the USB finish up before reset
+	          delay_us(5000);
+	          NVIC_SystemReset();
+	        } else {
+	          paw3399_set_lod((cfg & CONFIG_LOD) != 0);
+	          paw3399_set_as((cfg & CONFIG_ANGLE_SNAP_ON) != 0);
+	          paw3399_set_dpi((cfg & CONFIG_DPI));
+	          frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
+	          anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
+	        }
+		}
 
 		// do not run until NAK or XFRC on EP1
 		if (sync != 1)
