@@ -278,6 +278,8 @@ int main(void) {
 	usb_wait_configured();
 
 	while (1) {
+		// TODO If config is updated update all settings live
+
 		// do not run until NAK or XFRC on EP1
 		if (sync != 1)
 			continue;
@@ -302,6 +304,7 @@ int main(void) {
 			} else if ( frame_counter != 0 ) {
 				frame_counter++;
 				continue;
+			// TODO this seems bad
 			} else {
 				frame_counter++;
 			}
