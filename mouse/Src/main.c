@@ -51,19 +51,36 @@ static Config config_boot(void) {
 	uint8_t btn_boot = 0;
 	btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
 	btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
-	btn_boot |= (!(MMB_NO_PORT->IDR & MMB_NO_PIN)) << 2;
 
 	// update config depending on initial buttons
 	delay_ms(25); // delay in case power bounces on boot
 	Config cfg = config_read();
 	switch (btn_boot) {
 	case 0b01: // LMB pressed
-		cfg ^= CONFIG_ANGLE_SNAP_ON;
-		config_write(cfg);
-		if (cfg & CONFIG_ANGLE_SNAP_ON)
-			anim_cw(1);
-		else
-			anim_ccw(1);
+		uint16_t counter = 0;
+		while (((!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0) == 0b01) {
+		  delay_ms(1);
+		  if (counter <= 5000)
+			  counter++;
+		  else
+			  break;
+		}
+
+		if(counter > 5000) {
+			cfg ^= CONFIG_SWAP_LMB_AND_RMB;
+			config_write(cfg);
+			if (cfg & CONFIG_SWAP_LMB_AND_RMB)
+				anim_rightslow_pause_leftslow(1);
+			else
+				anim_leftslow_pause_rightslow(1);
+		} else {
+			cfg ^= CONFIG_ANGLE_SNAP_ON;
+			config_write(cfg);
+			if (cfg & CONFIG_ANGLE_SNAP_ON)
+				anim_cw(1);
+			else
+				anim_ccw(1);
+		}
 		break;
 	case 0b11: // LMB and RMB pressed
 		cfg ^= CONFIG_HS_USB;
@@ -72,14 +89,6 @@ static Config config_boot(void) {
 			anim_eight(1);
 		else
 			anim_one(1);
-		break;
-	case 0b111: // LMB, RMB and MMB pressed
-		cfg ^= CONFIG_SWAP_LMB_AND_RMB;
-		config_write(cfg);
-		if (cfg & CONFIG_SWAP_LMB_AND_RMB)
-			anim_rightslow_pause_leftslow(1);
-		else
-			anim_leftslow_pause_rightslow(1);
 		break;
 	}
 
