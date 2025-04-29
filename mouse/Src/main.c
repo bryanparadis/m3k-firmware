@@ -343,7 +343,7 @@ int main(void) {
 
         // frames to skip 0 = 8000Hz, 1 = 4000Hz, 3 = 2000Hz and 7 = 1000Hz
 		if (frames_to_skip != 0){
-			if ( frame_counter == frames_to_skip) {
+			if ( frame_counter >= frames_to_skip) {
 				frame_counter = 0;
 				continue;
 			} else if ( frame_counter != 0 ) {
