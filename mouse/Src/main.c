@@ -311,8 +311,7 @@ int main(void) {
 	        }
 
 	        // If USB Speed changed we must reset
-	        // Values in comparison are inverse so == not !=
-	        if (hs_usb == (cfg & CONFIG_HS_USB)){
+	        if (hs_usb != (cfg & CONFIG_HS_USB)){
 	          // Delay to let the USB finish up before reset
 	          delay_us(5000);
 	          NVIC_SystemReset();
