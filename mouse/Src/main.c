@@ -395,9 +395,10 @@ int main(void) {
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
 
-		// Save last loop's btn_unmasked
-		btn_unmasked_prev = btn_unmasked;
+		// Debounce
 		btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_unmasked_prev);
+		// Save for next loop
+		btn_unmasked_prev = btn_unmasked;
 
 		// Swap LMB (bit 0) and RMB (bit 1) in btn_unmasked
 		if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
