@@ -293,6 +293,7 @@ int main(void) {
 			update_cfg = 0;
 
 			Config new_cfg = ((uint16_t)cfg_bytes[1] << 8) | cfg_bytes[0];
+			int hsusb_before_update = (cfg & CONFIG_HS_USB);
 
 	        // Factory reset if last two bytes are both 0xFF
 	        if (cfg_bytes[2] == 0xFF && cfg_bytes[3] == 0xFF){
@@ -311,7 +312,7 @@ int main(void) {
 	        }
 
 	        // If USB Speed changed we must reset
-	        if (hs_usb != (cfg & CONFIG_HS_USB)){
+	        if (hsusb_before_update != (cfg & CONFIG_HS_USB)){
 	          // Delay to let the USB finish up before reset
 	          delay_us(5000);
 	          NVIC_SystemReset();
