@@ -308,8 +308,9 @@ int main(void) {
 	          }
 
 	          config_write(new_cfg);
-	          cfg = new_cfg;
 	        }
+
+	        cfg = config_read();
 
 	        // If USB Speed changed we must reset
 	        if (hsusb_before_update != (cfg & CONFIG_HS_USB)){
