@@ -33,8 +33,8 @@
 static int config_index = -1; // set on first call to read_config
 
 const Config config_default = (
-		0 << CONFIG_SWAP_LMB_AND_RMB |
-		0*CONFIG_ANGLE_SNAP_ON |
+		(0 & CONFIG_SWAP_LMB_AND_RMB) |
+		(0 & CONFIG_ANGLE_SNAP_ON) |
 		CONFIG_HS_USB | // HS USB
 		0 << CONFIG_INTERVAL_Pos | // 8kHz
 		(1 << CONFIG_LOD_Pos) | // 2mm LOD
