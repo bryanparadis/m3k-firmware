@@ -47,14 +47,20 @@ uint8_t count = 0;
 Usb_packet last_packet = {{1,0,0,0,0}};
 
 static Config config_boot(void) {
-	// read button state on boot
-	uint8_t btn_boot = 0;
-	btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
-	btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
-
 	// update config depending on initial buttons
 	delay_ms(25); // delay in case power bounces on boot
 	Config cfg = config_read();
+
+	// read button state on boot
+	uint8_t btn_boot = 0;
+	if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
+		btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 1;
+		btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 0;
+	} else {
+		btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
+		btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
+	}
+
 	switch (btn_boot) {
 	case 0b01: // LMB pressed
 		uint16_t counter = 0;
@@ -392,25 +398,27 @@ int main(void) {
 		if (hs_usb) // only run wheel code every 4 microframes
 			whl_count = (whl_count + 1) % 4;
 
-		const uint16_t btn_raw = btn_read();
+		uint16_t btn_raw = btn_read();
+		// Swap LMB and RMB
+		if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
+			btn_raw = (btn_raw & ~(0x03 | 0x0300)) |          // Clear bits 0, 1, 8, 9
+			          ((btn_raw & 0x01) << 1) |               // Move bit 0 to bit 1
+			          ((btn_raw & 0x02) >> 1) |               // Move bit 1 to bit 0
+			          ((btn_raw & 0x0100) << 1) |             // Move bit 8 to bit 9
+			          ((btn_raw & 0x0200) >> 1);              // Move bit 9 to bit 8
+		}
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
 
 		// Debounce
 		btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_unmasked_prev);
-		// Save for next loop
-		btn_unmasked_prev = btn_unmasked;
-
-		// Swap LMB (bit 0) and RMB (bit 1) in btn_unmasked
-		if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
-			btn_unmasked = (btn_unmasked & ~0x03) |           // Keep all bits except 0 and 1
-			               ((btn_unmasked & 0x01) << 1) |     // Move LMB (bit 0) to RMB (bit 1)
-			               ((btn_unmasked & 0x02) >> 1);      // Move RMB (bit 1) to LMB (bit 0)
-		}
 
 		// All buttons are ignored when you are changing settings on the mouse directly
 		// mode_process returns btn_unmasked during normal use and 0x00 when changing settings
 	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_unmasked_prev, squal);
+
+		// Save for next loop
+		btn_unmasked_prev = btn_unmasked;
 
 		// Add animation x and y data
 		const struct Xy a = anim_read(); // returns 0 if no animation left
