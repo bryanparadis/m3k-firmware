@@ -122,40 +122,79 @@ static void btn_whl_init(void)
 // rising edge detection example:
 // if LMB_NO was always 1: 1 in bit 0
 // if LMB_NO was low at any point since last clear of EXTI->PR: 0 in bit 0
-static inline uint16_t btn_read(void)
+static inline uint16_t btn_read(int swapped)
 {
-	const uint16_t now = (
-			SHIFT(LMB_NO_PORT->IDR & LMB_NO_PIN, LMB_NO_PIN_Pos, 0) |
-			SHIFT(RMB_NO_PORT->IDR & RMB_NO_PIN, RMB_NO_PIN_Pos, 1) |
-			SHIFT(MMB_NO_PORT->IDR & MMB_NO_PIN, MMB_NO_PIN_Pos, 2) |
-			SHIFT(BT4_NO_PORT->IDR & BT4_NO_PIN, BT4_NO_PIN_Pos, 3) |
-			SHIFT(BT5_NO_PORT->IDR & BT5_NO_PIN, BT5_NO_PIN_Pos, 4) |
-			SHIFT(LMB_NC_PORT->IDR & LMB_NC_PIN, LMB_NC_PIN_Pos, 0 + 8) |
-			SHIFT(RMB_NC_PORT->IDR & RMB_NC_PIN, RMB_NC_PIN_Pos, 1 + 8) |
-			SHIFT(MMB_NC_PORT->IDR & MMB_NC_PIN, MMB_NC_PIN_Pos, 2 + 8) |
-			SHIFT(BT4_NC_PORT->IDR & BT4_NC_PIN, BT4_NC_PIN_Pos, 3 + 8) |
-			SHIFT(BT5_NC_PORT->IDR & BT5_NC_PIN, BT5_NC_PIN_Pos, 4 + 8)
-	);
-	const uint32_t EXTI_PR_read = EXTI->PR;
-	const uint16_t edge = (
-			SHIFT(EXTI_PR_read & LMB_NO_PIN, LMB_NO_PIN_Pos, 0) |
-			SHIFT(EXTI_PR_read & RMB_NO_PIN, RMB_NO_PIN_Pos, 1) |
-			SHIFT(EXTI_PR_read & MMB_NO_PIN, MMB_NO_PIN_Pos, 2) |
-			SHIFT(EXTI_PR_read & BT4_NO_PIN, BT4_NO_PIN_Pos, 3) |
-			SHIFT(EXTI_PR_read & BT5_NO_PIN, BT5_NO_PIN_Pos, 4) |
-			SHIFT(EXTI_PR_read & LMB_NC_PIN, LMB_NC_PIN_Pos, 0 + 8) |
-			SHIFT(EXTI_PR_read & RMB_NC_PIN, RMB_NC_PIN_Pos, 1 + 8) |
-			SHIFT(EXTI_PR_read & MMB_NC_PIN, MMB_NC_PIN_Pos, 2 + 8) |
-			SHIFT(EXTI_PR_read & BT4_NC_PIN, BT4_NC_PIN_Pos, 3 + 8) |
-			SHIFT(EXTI_PR_read & BT5_NC_PIN, BT5_NC_PIN_Pos, 4 + 8)
-	);
-	const uint32_t pins_mask = (
-			LMB_NO_PIN | LMB_NC_PIN |
-			RMB_NO_PIN | RMB_NC_PIN |
-			MMB_NO_PIN | MMB_NC_PIN |
-			BT4_NO_PIN | BT4_NC_PIN |
-			BT5_NO_PIN | BT5_NC_PIN
-	);
+	uint16_t now;
+	uint32_t EXTI_PR_read = EXTI->PR;
+	uint16_t edge;
+	uint32_t pins_mask;
+
+	if (swapped){
+		now = (
+				SHIFT(RMB_NO_PORT->IDR & RMB_NO_PIN, RMB_NO_PIN_Pos, 0) |
+				SHIFT(LMB_NO_PORT->IDR & LMB_NO_PIN, LMB_NO_PIN_Pos, 1) |
+				SHIFT(MMB_NO_PORT->IDR & MMB_NO_PIN, MMB_NO_PIN_Pos, 2) |
+				SHIFT(BT4_NO_PORT->IDR & BT4_NO_PIN, BT4_NO_PIN_Pos, 3) |
+				SHIFT(BT5_NO_PORT->IDR & BT5_NO_PIN, BT5_NO_PIN_Pos, 4) |
+				SHIFT(RMB_NC_PORT->IDR & RMB_NC_PIN, RMB_NC_PIN_Pos, 0 + 8) |
+				SHIFT(LMB_NC_PORT->IDR & LMB_NC_PIN, LMB_NC_PIN_Pos, 1 + 8) |
+				SHIFT(MMB_NC_PORT->IDR & MMB_NC_PIN, MMB_NC_PIN_Pos, 2 + 8) |
+				SHIFT(BT4_NC_PORT->IDR & BT4_NC_PIN, BT4_NC_PIN_Pos, 3 + 8) |
+				SHIFT(BT5_NC_PORT->IDR & BT5_NC_PIN, BT5_NC_PIN_Pos, 4 + 8)
+		);
+
+		edge = (
+				SHIFT(EXTI_PR_read & RMB_NO_PIN, RMB_NO_PIN_Pos, 0) |
+				SHIFT(EXTI_PR_read & LMB_NO_PIN, LMB_NO_PIN_Pos, 1) |
+				SHIFT(EXTI_PR_read & MMB_NO_PIN, MMB_NO_PIN_Pos, 2) |
+				SHIFT(EXTI_PR_read & BT4_NO_PIN, BT4_NO_PIN_Pos, 3) |
+				SHIFT(EXTI_PR_read & BT5_NO_PIN, BT5_NO_PIN_Pos, 4) |
+				SHIFT(EXTI_PR_read & RMB_NC_PIN, RMB_NC_PIN_Pos, 0 + 8) |
+				SHIFT(EXTI_PR_read & LMB_NC_PIN, LMB_NC_PIN_Pos, 1 + 8) |
+				SHIFT(EXTI_PR_read & MMB_NC_PIN, MMB_NC_PIN_Pos, 2 + 8) |
+				SHIFT(EXTI_PR_read & BT4_NC_PIN, BT4_NC_PIN_Pos, 3 + 8) |
+				SHIFT(EXTI_PR_read & BT5_NC_PIN, BT5_NC_PIN_Pos, 4 + 8)
+		);
+		pins_mask = (
+				RMB_NO_PIN | RMB_NC_PIN |
+				LMB_NO_PIN | LMB_NC_PIN |
+				MMB_NO_PIN | MMB_NC_PIN |
+				BT4_NO_PIN | BT4_NC_PIN |
+				BT5_NO_PIN | BT5_NC_PIN
+		);
+	} else {
+		now = (
+				SHIFT(LMB_NO_PORT->IDR & LMB_NO_PIN, LMB_NO_PIN_Pos, 0) |
+				SHIFT(RMB_NO_PORT->IDR & RMB_NO_PIN, RMB_NO_PIN_Pos, 1) |
+				SHIFT(MMB_NO_PORT->IDR & MMB_NO_PIN, MMB_NO_PIN_Pos, 2) |
+				SHIFT(BT4_NO_PORT->IDR & BT4_NO_PIN, BT4_NO_PIN_Pos, 3) |
+				SHIFT(BT5_NO_PORT->IDR & BT5_NO_PIN, BT5_NO_PIN_Pos, 4) |
+				SHIFT(LMB_NC_PORT->IDR & LMB_NC_PIN, LMB_NC_PIN_Pos, 0 + 8) |
+				SHIFT(RMB_NC_PORT->IDR & RMB_NC_PIN, RMB_NC_PIN_Pos, 1 + 8) |
+				SHIFT(MMB_NC_PORT->IDR & MMB_NC_PIN, MMB_NC_PIN_Pos, 2 + 8) |
+				SHIFT(BT4_NC_PORT->IDR & BT4_NC_PIN, BT4_NC_PIN_Pos, 3 + 8) |
+				SHIFT(BT5_NC_PORT->IDR & BT5_NC_PIN, BT5_NC_PIN_Pos, 4 + 8)
+		);
+		edge = (
+				SHIFT(EXTI_PR_read & LMB_NO_PIN, LMB_NO_PIN_Pos, 0) |
+				SHIFT(EXTI_PR_read & RMB_NO_PIN, RMB_NO_PIN_Pos, 1) |
+				SHIFT(EXTI_PR_read & MMB_NO_PIN, MMB_NO_PIN_Pos, 2) |
+				SHIFT(EXTI_PR_read & BT4_NO_PIN, BT4_NO_PIN_Pos, 3) |
+				SHIFT(EXTI_PR_read & BT5_NO_PIN, BT5_NO_PIN_Pos, 4) |
+				SHIFT(EXTI_PR_read & LMB_NC_PIN, LMB_NC_PIN_Pos, 0 + 8) |
+				SHIFT(EXTI_PR_read & RMB_NC_PIN, RMB_NC_PIN_Pos, 1 + 8) |
+				SHIFT(EXTI_PR_read & MMB_NC_PIN, MMB_NC_PIN_Pos, 2 + 8) |
+				SHIFT(EXTI_PR_read & BT4_NC_PIN, BT4_NC_PIN_Pos, 3 + 8) |
+				SHIFT(EXTI_PR_read & BT5_NC_PIN, BT5_NC_PIN_Pos, 4 + 8)
+		);
+		pins_mask = (
+				LMB_NO_PIN | LMB_NC_PIN |
+				RMB_NO_PIN | RMB_NC_PIN |
+				MMB_NO_PIN | MMB_NC_PIN |
+				BT4_NO_PIN | BT4_NC_PIN |
+				BT5_NO_PIN | BT5_NC_PIN
+		);
+	}
 	EXTI->PR = pins_mask;
 	return now & ~edge;
 }

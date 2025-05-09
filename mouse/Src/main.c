@@ -398,15 +398,7 @@ int main(void) {
 		if (hs_usb) // only run wheel code every 4 microframes
 			whl_count = (whl_count + 1) % 4;
 
-		uint16_t btn_raw = btn_read();
-		// Swap LMB and RMB
-		if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
-			btn_raw = (btn_raw & ~(0x03 | 0x0300)) |          // Clear bits 0, 1, 8, 9
-			          ((btn_raw & 0x01) << 1) |               // Move bit 0 to bit 1
-			          ((btn_raw & 0x02) >> 1) |               // Move bit 1 to bit 0
-			          ((btn_raw & 0x0100) << 1) |             // Move bit 8 to bit 9
-			          ((btn_raw & 0x0200) >> 1);              // Move bit 9 to bit 8
-		}
+		uint16_t btn_raw = btn_read((cfg & CONFIG_SWAP_LMB_AND_RMB));
 		const uint8_t btn_NO = (btn_raw & 0xFF);
 		const uint8_t btn_NC = (btn_raw >> 8);
 
