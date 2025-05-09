@@ -53,13 +53,8 @@ static Config config_boot(void) {
 
 	// read button state on boot
 	uint8_t btn_boot = 0;
-	if((cfg & CONFIG_SWAP_LMB_AND_RMB)) {
-		btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 1;
-		btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 0;
-	} else {
-		btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
-		btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
-	}
+	btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
+	btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
 
 	switch (btn_boot) {
 	case 0b01: // LMB pressed
