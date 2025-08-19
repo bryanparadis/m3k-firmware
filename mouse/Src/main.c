@@ -269,7 +269,7 @@ int main(void) {
 	// 0, 1, 2, 3
 	// 0, 1, 3, 7 frames to skip
     int frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
-    int frame_counter = 0;
+    int frame_counter = frames_to_skip;
 
 	usb_init(hs_usb);
 	// frames_to_skip = 0 = 8000Hz = 8 / (0 + 1)  = 8 animation_scaling
@@ -343,18 +343,9 @@ int main(void) {
 			delay_us(935);
 		}
 
-        // frames to skip 0 = 8000Hz, 1 = 4000Hz, 3 = 2000Hz and 7 = 1000Hz
-		if (frames_to_skip != 0){
-			if ( frame_counter >= frames_to_skip) {
-				frame_counter = 0;
-				continue;
-			} else if ( frame_counter != 0 ) {
-				frame_counter++;
-				continue;
-			// TODO this seems bad
-			} else {
-				frame_counter++;
-			}
+		if (frame_counter > 0) {
+			frame_counter--;
+			continue;
 		}
 
 		// Reset packet
@@ -418,6 +409,7 @@ int main(void) {
 		  // save last packet
 		  last_packet.btn = packet.btn;
 		  ready = 1;
+		  frame_counter = frames_to_skip;
 		  // enqueue fifo write
 		  NVIC->STIR = OTG_HS_EP1_IN_IRQn;
 		}
