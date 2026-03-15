@@ -1,0 +1,48 @@
+CMSIS = ../CMSIS_5/CMSIS/Core/Include
+CMSIS_F7 = ../cmsis-device-f7
+
+CC      := arm-none-eabi-gcc
+OBJCOPY := arm-none-eabi-objcopy
+SIZE    := arm-none-eabi-size
+
+CFLAGS  = -O3 -std=gnu17 -Wall -Wextra
+CFLAGS += -mcpu=cortex-m7 -mthumb -mabi=aapcs
+CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing -fno-builtin -fshort-enums
+
+DEFINES = -DSTM32F723xx
+
+INCLUDE = -I$(CMSIS) -I$(CMSIS_F7)/Include -IInc -IInc/HAL_USB
+
+LDFLAGS = -TSTM32F730I8KX_FLASH.ld -Wl,--gc-sections --specs=nano.specs
+
+STARTUP = \
+	$(CMSIS_F7)/Source/Templates/gcc/startup_stm32f723xx.s \
+	$(CMSIS_F7)/Source/Templates/system_stm32f7xx.c
+
+SOURCES = \
+	Src/main.c \
+	Src/config.c \
+	Src/delay.c \
+	Src/usb.c \
+	Src/HAL_USB/stm32f7xx_ll_usb.c \
+	Src/HAL_USB/usbd_conf.c \
+	Src/HAL_USB/usbd_ctlreq.c \
+	Src/HAL_USB/usbd_desc.c \
+	Src/HAL_USB/usbd_hid.c \
+	Src/HAL_USB/usbd_ioreq.c \
+    Src/anim.c
+
+TARGET = mouse
+
+all:
+	$(CC) $(CFLAGS) \
+		$(INCLUDE) \
+		$(LDFLAGS) \
+		$(STARTUP) $(SOURCES) \
+		$(DEFINES) \
+		-o $(TARGET).elf
+	$(OBJCOPY) -Obinary $(TARGET).elf $(TARGET).bin
+	$(SIZE) $(TARGET).elf
+
+clean:
+	rm -f *.o *.elf *.bin *.hex
