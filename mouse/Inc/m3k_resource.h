@@ -27,7 +27,7 @@
 
 #define M3K_USB_MFG "Zaunkoenig"
 #define M3K_USB_NAME "M3K"
-#define M3K_FW_VERSION "parawizard new v0.8.2"
+#define M3K_FW_VERSION "parawizard new v0.8.3"
 #define M3K_FW_VERSION_FORMATTED " firmware " M3K_FW_VERSION
 static_assert(sizeof(M3K_FW_VERSION) <= 64, "M3K_FW_VERSION must be less than or equal to 64 bytes");
 #define M3K_USB_PID 0xA462
