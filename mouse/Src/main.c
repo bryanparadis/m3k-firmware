@@ -269,7 +269,7 @@ int main(void) {
 	// 0, 1, 2, 3
 	// 0, 1, 3, 7 frames to skip
     int frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
-    int frame_counter = frames_to_skip;
+    int frame_counter = 0;
 
 	usb_init(hs_usb);
 	// frames_to_skip = 0 = 8000Hz = 8 / (0 + 1)  = 8 animation_scaling
@@ -343,8 +343,9 @@ int main(void) {
 			delay_us(935);
 		}
 
-		if (frame_counter > 0) {
-			frame_counter--;
+		// skip frames for polling rate but then stop skipping if idle
+		if (frame_counter < frames_to_skip) {
+			frame_counter++;
 			continue;
 		}
 
@@ -398,10 +399,14 @@ int main(void) {
 		// Save for next loop
 		btn_unmasked_prev = btn_unmasked;
 
+		if (anim_running) {
 		// Add animation x and y data
-		const struct Xy a = anim_read(); // returns 0 if no animation left
-		packet.x += a.x;
-		packet.y += a.y;
+			const struct Xy a = anim_read(); // returns 0 if no animation left or when scaling
+			packet.x += a.x;
+			packet.y += a.y;
+			// If we are animating we must keep skipping frames/disable the idle optimization
+			frame_counter = 0;
+		}
 
 		__disable_irq();
 		// check to see if there is new data
@@ -409,7 +414,7 @@ int main(void) {
 		  // save last packet
 		  last_packet.btn = packet.btn;
 		  ready = 1;
-		  frame_counter = frames_to_skip;
+		  frame_counter = 0;
 		  // enqueue fifo write
 		  NVIC->STIR = OTG_HS_EP1_IN_IRQn;
 		}

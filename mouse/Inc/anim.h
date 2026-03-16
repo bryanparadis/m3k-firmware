@@ -23,6 +23,7 @@
 
 #pragma once
 #include "cmsis_compiler.h"
+#include <stdbool.h>
 
 struct Xy {
 	int16_t x, y;
@@ -42,6 +43,8 @@ void anim_add(int reps, int len_seq, const struct Anim seq[]);
 void anim_num(const uint16_t x);
 
 struct Xy anim_read(void);
+
+bool anim_running(void);
 
 #define ANIM(l, _x, _y) ((struct Anim){.len = (l), .xy = (struct Xy){.x = (_x), .y = (_y)}})
 

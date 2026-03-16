@@ -105,3 +105,11 @@ struct Xy anim_read(void)
 		anim_buf_head = (anim_buf_head + 1) % BUF_SIZE;
 	return ret;
 }
+
+bool anim_running(void)
+{
+	if(anim_buf_head == anim_buf_tail)
+		return false;
+	else
+		return true;
+}
