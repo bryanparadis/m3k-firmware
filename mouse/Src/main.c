@@ -319,7 +319,7 @@ int main(void) {
 	          delay_us(5000);
 	          NVIC_SystemReset();
 	        } else {
-	          paw3399_set_lod((cfg & CONFIG_LOD) != 0);
+	          paw3399_set_lod(_FLD2VAL(CONFIG_LOD, cfg));
 	          paw3399_set_as((cfg & CONFIG_ANGLE_SNAP_ON) != 0);
 	          paw3399_set_dpi((cfg & CONFIG_DPI));
 	          frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
