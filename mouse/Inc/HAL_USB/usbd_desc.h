@@ -57,7 +57,7 @@
 #define         DEVICE_ID2          (0x1FF07A14)
 #define         DEVICE_ID3          (0x1FF07A18)
 
-#define  USB_SIZ_STRING_SERIAL       (0x1A + 2*(sizeof(M3K_FW_VERSION_FORMATTED) - 1))
+#define  USB_SIZ_STRING_SERIAL       (0x1A + 2*(sizeof(FW_VERSION_FORMATTED) - 1))
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */

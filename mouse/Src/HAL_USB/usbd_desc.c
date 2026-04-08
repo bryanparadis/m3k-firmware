@@ -59,11 +59,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define USBD_VID                      M3K_USB_VID
-#define USBD_PID                      M3K_USB_PID
+#define USBD_VID                      USB_VID
+#define USBD_PID                      USB_PID
 #define USBD_LANGID_STRING            0x409
-#define USBD_MANUFACTURER_STRING      M3K_USB_MFG
-#define USBD_PRODUCT_STRING           M3K_USB_NAME
+#define USBD_MANUFACTURER_STRING      USB_MFG
+#define USBD_PRODUCT_STRING           USB_NAME
 #define USBD_CONFIGURATION_STRING     "HID Config"
 #define USBD_INTERFACE_STRING         "HID Interface"
 
@@ -244,9 +244,9 @@ static void Get_SerialNum(void)
     IntToUnicode (deviceserial1, &USBD_StringSerial[18] ,4);
   }
   // append firmware version
-  for (int i = 0; i < sizeof(M3K_FW_VERSION_FORMATTED) - 1; i++)
+  for (int i = 0; i < sizeof(FW_VERSION_FORMATTED) - 1; i++)
   {
-	USBD_StringSerial[26 + 2*i] = M3K_FW_VERSION_FORMATTED[i];
+	USBD_StringSerial[26 + 2*i] = FW_VERSION_FORMATTED[i];
 	USBD_StringSerial[26 + 2*i + 1] = 0U;
   }
 }

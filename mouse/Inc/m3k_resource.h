@@ -25,13 +25,13 @@
 
 #pragma once
 
-#define M3K_USB_MFG "Zaunkoenig"
-#define M3K_USB_NAME "M3K"
-#define M3K_FW_VERSION "parawizard new v0.8.4"
-#define M3K_FW_VERSION_FORMATTED " firmware " M3K_FW_VERSION
-static_assert(sizeof(M3K_FW_VERSION) <= 64, "M3K_FW_VERSION must be less than or equal to 64 bytes");
-#define M3K_USB_PID 0xA462
-#define M3K_USB_VID 0x0483
+#define USB_MFG "Zaunkoenig"
+#define USB_NAME "M3K"
+#define FW_VERSION "parawizard new v0.8.4"
+#define FW_VERSION_FORMATTED " firmware " FW_VERSION
+static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal to 64 bytes");
+#define USB_PID 0xA462
+#define USB_VID 0x0483
 
 // SPI periph pin clocks
 #define SPIx                             SPI3

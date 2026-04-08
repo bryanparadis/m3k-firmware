@@ -362,7 +362,7 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
 
 			report_buffer[0] = 0x02U;
-			memcpy(&report_buffer[1], M3K_FW_VERSION, sizeof(M3K_FW_VERSION)); // Copy including null terminator
+			memcpy(&report_buffer[1], FW_VERSION, sizeof(FW_VERSION)); // Copy including null terminator
 
 			// Send Report ID + 64 bytes of firmware version
 			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 65);
