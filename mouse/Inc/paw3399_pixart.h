@@ -25,7 +25,7 @@
 
 #include <stdint.h>
 #include "delay.h"
-#include "resource.h"
+#include "board.h"
 #include "stm32f7xx.h"
 #include "config.h"
 

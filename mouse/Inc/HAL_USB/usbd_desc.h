@@ -48,7 +48,7 @@
 #define __USBD_DESC_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "resource.h"
+#include "board.h"
 #include "usbd_def.h"
 
 /* Exported types ------------------------------------------------------------*/

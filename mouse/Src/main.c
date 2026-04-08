@@ -23,7 +23,7 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include "resource.h"
+#include "board.h"
 #include "paw3399.h"
 #include "stm32f7xx.h"
 #include "usbd_hid.h"
