@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <resource.h>
+#include "resource.h"
 #include "stm32f7xx.h"
 
 // if x is either 0 or (1 << a)
