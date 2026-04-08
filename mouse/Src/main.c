@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include "board.h"
-#include "paw3399.h"
+#include "sensor.h"
 #include "stm32f7xx.h"
 #include "usbd_hid.h"
 #include "usb.h"
