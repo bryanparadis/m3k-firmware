@@ -48,7 +48,7 @@
 #define __USBD_DESC_H
 
 /* Includes ------------------------------------------------------------------*/
-#include <m3k_resource.h>
+#include <resource.h>
 #include "usbd_def.h"
 
 /* Exported types ------------------------------------------------------------*/

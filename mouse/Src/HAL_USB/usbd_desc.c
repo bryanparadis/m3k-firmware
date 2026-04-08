@@ -44,7 +44,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include <m3k_resource.h>
+#include <resource.h>
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_conf.h"

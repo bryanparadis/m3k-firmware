@@ -24,7 +24,7 @@
 #pragma once
 
 #include <delay.h>
-#include <m3k_resource.h>
+#include <resource.h>
 #include <stdint.h>
 #include "stm32f7xx.h"
 #include "config.h"

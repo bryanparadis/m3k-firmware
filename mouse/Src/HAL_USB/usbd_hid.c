@@ -46,7 +46,7 @@ EndBSPDependencies */
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
-#include "m3k_resource.h"
+#include "resource.h"
 #include "config.h"
 #include "main.h"
 

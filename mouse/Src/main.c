@@ -22,7 +22,7 @@
  */
 
 #include <assert.h>
-#include <m3k_resource.h>
+#include <resource.h>
 #include <paw3399.h>
 #include <stdint.h>
 #include "stm32f7xx.h"
