@@ -32,13 +32,23 @@
 
 static int config_index = -1; // set on first call to read_config
 
-const Config config_default = (
-		(0 & CONFIG_SWAP_LMB_AND_RMB) |
-		(0 & CONFIG_ANGLE_SNAP_ON) |
-		CONFIG_HS_USB | // HS USB
-		0 << CONFIG_INTERVAL_Pos | // 8kHz
-		(1 << CONFIG_LOD_Pos) | // 2mm LOD
-		(800/50 - 1) // 800 dpi
+#ifdef BOARD_M2K
+	const Config config_default = (
+			(0 & CONFIG_SWAP_LMB_AND_RMB) |
+			(0 & CONFIG_ANGLE_SNAP_ON) |
+			CONFIG_HS_USB | // HS USB
+			0 << CONFIG_INTERVAL_Pos | // 8kHz
+			(2 << CONFIG_LOD_Pos) | // 2mm LOD 0b10
+			(800/100 - 1) // 800 dpi
+#elif BOARD_M3K
+	const Config config_default = (
+			(0 & CONFIG_SWAP_LMB_AND_RMB) |
+			(0 & CONFIG_ANGLE_SNAP_ON) |
+			CONFIG_HS_USB | // HS USB
+			0 << CONFIG_INTERVAL_Pos | // 8kHz
+			(1 << CONFIG_LOD_Pos) | // 2mm LOD 0b01
+			(800/50 - 1) // 800 dpi
+#endif
 );
 
 static void flash_unlock(void)

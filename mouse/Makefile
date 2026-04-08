@@ -9,14 +9,11 @@ CFLAGS  = -Os -std=gnu17 -Wall -Wextra
 CFLAGS += -mcpu=cortex-m7 -mthumb -mabi=aapcs
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing -fno-builtin -fshort-enums
 
-DEFINES = -DSTM32F723xx
-
 INCLUDE = -I$(CMSIS) -I$(CMSIS_F7)/Include -IInc -IInc/HAL_USB
 
 LDFLAGS = -TSTM32F730I8KX_FLASH.ld -Wl,--gc-sections --specs=nano.specs
 
 STARTUP = \
-	$(CMSIS_F7)/Source/Templates/gcc/startup_stm32f723xx.s \
 	$(CMSIS_F7)/Source/Templates/system_stm32f7xx.c
 
 SOURCES = \
@@ -32,9 +29,17 @@ SOURCES = \
 	Src/HAL_USB/usbd_ioreq.c \
     Src/anim.c
 
-TARGET = mouse
+m2k: TARGET := m2k
+m2k: DEFINES += -DBOARD_M2K -DSTM32F730xx
+m2k: STARTUP +=	$(CMSIS_F7)/Source/Templates/gcc/startup_stm32f730xx.s 
+m2k: m2k.output
+m3k: TARGET := m3k
+m3k: DEFINES += -DBOARD_M3K -DSTM32F723xx
+m3k: STARTUP +=	$(CMSIS_F7)/Source/Templates/gcc/startup_stm32f723xx.s 
+m3k: m3k.output
 
-all:
+
+%.output:
 	$(CC) $(CFLAGS) \
 		$(INCLUDE) \
 		$(LDFLAGS) \

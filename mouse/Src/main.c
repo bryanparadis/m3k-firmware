@@ -166,7 +166,11 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 	} else if (mode == 2) { // handle LOD/Hz mode
 		const uint8_t released = (~btn) & btn_prev;
 		if ((released & 0b01) != 0 && !lifted) { // LMB released
+#ifdef BOARD_M2K
+			const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) == 0b10) ? 0b11 : 0b10;
+#elif  BOARD_M3K
 			const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) + 1) % 3;
+#endif
 			*cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
 			anim_cw(1 + new_lod);
 			sensor_set_lod(new_lod);
@@ -334,11 +338,19 @@ int main(void) {
 		//77us ok  1 poll
 		//78us bad 2 polls
 		//104us at 160MHz
+#ifdef BOARD_M2K
+		if (hs_usb) {
+			delay_us(27);
+		} else {
+			delay_us(902);
+		}
+#elif  BOARD_M3K
 		if (hs_usb) {
 			delay_us(60);
 		} else {
 			delay_us(935);
 		}
+#endif
 
 		// skip frames for polling rate but then stop skipping if idle
 		if (frame_counter < frames_to_skip) {
@@ -354,8 +366,13 @@ int main(void) {
 
 		// read sensor, buttons
 		ss_low();
+#ifdef BOARD_M2K
+		spi_send(0x50);
+		delay_us(35);
+#elif  BOARD_M3K
 		spi_send(0x16);
 		delay_us(2);
+#endif
 		(void) spi_recv(); // motion, not used
 		(void) spi_recv(); // observation, not used
 		packet.u8[3] = spi_recv(); // x lower 8 bits
