@@ -123,22 +123,19 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 	const int SQUAL_THRESH = 75;
 	const int lifted = (squal < SQUAL_THRESH);
 
-	const uint16_t dpi_min = 0x0000; // = 0   = 50dpi
-	const uint16_t dpi_max = 0x018F; // = 399 = 20000dpi
-	const uint16_t DPI_LARGE_JUMP = 10; // 10 * 50dpi = 500.
 	uint16_t dpi = _FLD2VAL(CONFIG_DPI, *cfg);
 
 	if (mode == 1) { // handle cpi mode
 		const uint8_t released = (~btn) & btn_prev;
 		if ((released & 0b01) != 0 && !lifted) { // LMB released
 			if (btn & 0b10) { // if RMB is held
-				if (dpi != dpi_min) {
-					dpi = MAX(dpi - DPI_LARGE_JUMP, dpi_min);
+				if (dpi != DPI_MIN) {
+					dpi = MAX(dpi - DPI_LARGE_JUMP, DPI_MIN);
 					anim_lg_downup(1);
 				}
 				large_step = 1;
 			} else if (!large_step) {
-				if (dpi != dpi_min) {
+				if (dpi != DPI_MIN) {
 					dpi--;
 					anim_downup(1);
 				}
@@ -150,13 +147,13 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 		}
 		if ((released & 0b10) != 0 && !lifted) { // RMB released
 			if (btn & 0b01) { // if LMB is held
-				if (dpi != dpi_max) {
-					dpi = MIN(dpi + DPI_LARGE_JUMP, dpi_max);
+				if (dpi != DPI_MAX) {
+					dpi = MIN(dpi + DPI_LARGE_JUMP, DPI_MAX);
 					anim_lg_updown(1);
 				}
 				large_step = 1;
 			} else if (!large_step) {
-				if (dpi != dpi_max) {
+				if (dpi != DPI_MAX) {
 					dpi++;
 					anim_updown(1);
 				}
@@ -303,9 +300,9 @@ int main(void) {
 	        } else if (new_cfg == cfg) {
 	        	continue;
 	        } else {
-	          // Limit DPI to max of 399 == 20000 dpi
-	          if ((new_cfg & CONFIG_DPI) > 399) {
-	        	  new_cfg = (new_cfg & (~CONFIG_DPI_Msk)) | 399;
+	          // Limit DPI. M2K 119 steps 12000 dpi and M3K 399 steps 20000 dpi
+	          if ((new_cfg & CONFIG_DPI) > DPI_MAX) {
+	        	  new_cfg = (new_cfg & (~CONFIG_DPI_Msk)) | DPI_MAX;
 	          }
 
 	          config_write(new_cfg);

@@ -29,6 +29,10 @@
 #include "stm32f7xx.h"
 #include "config.h"
 
+#define DPI_MIN        0x0000 // =   0 = 50dpi
+#define DPI_MAX        0x018F // = 399 = 20000dpi
+#define DPI_LARGE_JUMP 10     // 10 * 50dpi = 500.
+
 static void spi_init(void)
 {
 	// GPIO config
