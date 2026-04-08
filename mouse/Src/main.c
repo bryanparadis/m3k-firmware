@@ -146,7 +146,7 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 				large_step = 0;
 			}
 			*cfg = (*cfg & (~CONFIG_DPI_Msk)) | dpi;
-			paw3399_set_dpi(dpi);
+			sensor_set_dpi(dpi);
 		}
 		if ((released & 0b10) != 0 && !lifted) { // RMB released
 			if (btn & 0b01) { // if LMB is held
@@ -164,7 +164,7 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 				large_step = 0;
 			}
 			*cfg = (*cfg & (~CONFIG_DPI_Msk)) | dpi;
-			paw3399_set_dpi(dpi);
+			sensor_set_dpi(dpi);
 		}
 	} else if (mode == 2) { // handle LOD/Hz mode
 		const uint8_t released = (~btn) & btn_prev;
@@ -172,7 +172,7 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 			const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) + 1) % 3;
 			*cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
 			anim_cw(1 + new_lod);
-			paw3399_set_lod(new_lod);
+			sensor_set_lod(new_lod);
 		}
 		if ((released & 0b10) != 0 && !lifted && hs) { // RMB released in HS mode
 			// loops 8k (0b00) -> 1k (0b11) -> 2k (0b10) -> 4k (0b01) -> 8k
@@ -279,7 +279,7 @@ int main(void) {
 	anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
 
 	spi_init();
-	paw3399_init(cfg);
+	sensor_init(cfg);
 
 	uint8_t btn_unmasked_prev = 0;
 	uint8_t btn_unmasked = 0;
@@ -319,9 +319,9 @@ int main(void) {
 	          delay_us(5000);
 	          NVIC_SystemReset();
 	        } else {
-	          paw3399_set_lod(_FLD2VAL(CONFIG_LOD, cfg));
-	          paw3399_set_as((cfg & CONFIG_ANGLE_SNAP_ON) != 0);
-	          paw3399_set_dpi((cfg & CONFIG_DPI));
+	          sensor_set_lod(_FLD2VAL(CONFIG_LOD, cfg));
+	          sensor_set_as((cfg & CONFIG_ANGLE_SNAP_ON) != 0);
+	          sensor_set_dpi((cfg & CONFIG_DPI));
 	          frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
 	          anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
 	        }

@@ -115,7 +115,7 @@ static uint8_t spi_read(const uint8_t addr) {
 }
 
 // equivalent of 6.2.1-99
-static void paw3399_spi1(void)
+static void sensor_spi1(void)
 {
 	ss_low();
 	spi_write(0x40, 0x80);
@@ -214,7 +214,7 @@ static void paw3399_spi1(void)
 	ss_high();
 }
 
-static void paw3399_spi2(void)
+static void sensor_spi2(void)
 {
 	ss_low();
 	spi_write(0x7F, 0x0C);
@@ -255,7 +255,7 @@ static void paw3399_spi2(void)
 	ss_high();
 }
 
-static void paw3399_set_dpi(const uint16_t dpi)
+static void sensor_set_dpi(const uint16_t dpi)
 {
 	ss_low();
 	spi_write(0x48, dpi & 0xff); // RESOLUTION_X_LOW
@@ -266,14 +266,14 @@ static void paw3399_set_dpi(const uint16_t dpi)
 	ss_high();
 }
 
-static void paw3399_set_as(const uint8_t angle_snap)
+static void sensor_set_as(const uint8_t angle_snap)
 {
 	ss_low();
 	spi_write(0x56, (angle_snap << 7) | 0x0D);
 	ss_high();
 }
 
-static void paw3399_set_lod(const uint8_t lod)
+static void sensor_set_lod(const uint8_t lod)
 {
 	ss_low();
 	spi_write(0x7F, 0x0C);
@@ -282,7 +282,7 @@ static void paw3399_set_lod(const uint8_t lod)
 	ss_high();
 }
 
-static void paw3399_init(const Config cfg)
+static void sensor_init(const Config cfg)
 {
 	const uint16_t dpi = _FLD2VAL(CONFIG_DPI, cfg);
 	const uint8_t ang_snap = (cfg & CONFIG_ANGLE_SNAP_ON) ? 1 : 0;
@@ -307,7 +307,7 @@ static void paw3399_init(const Config cfg)
 	delay_ms(10); // 6.1.5
 
 	// 6.1.6
-	paw3399_spi1();
+	sensor_spi1();
 	// 6.2.100-107
 	ss_low();
 	spi_write(0x22, 0x01);
@@ -332,7 +332,7 @@ static void paw3399_init(const Config cfg)
 	ss_high();
 
 	// equivalent of 7.3
-	paw3399_spi2();
+	sensor_spi2();
 
 	// new placement for anti-jitter configuration
 	ss_low();
@@ -355,9 +355,9 @@ static void paw3399_init(const Config cfg)
 	spi_write(0x68, 0x01);
 	ss_high();
 
-	paw3399_set_dpi(dpi);
-	paw3399_set_as(ang_snap);
-	paw3399_set_lod(lod);
+	sensor_set_dpi(dpi);
+	sensor_set_as(ang_snap);
+	sensor_set_lod(lod);
 
 	// invert x
 	ss_low();
