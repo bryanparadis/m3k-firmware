@@ -168,11 +168,13 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 		if ((released & 0b01) != 0 && !lifted) { // LMB released
 #ifdef BOARD_M2K
 			const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) == 0b10) ? 0b11 : 0b10;
+			*cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
+			anim_cw(new_lod);
 #elif  BOARD_M3K
 			const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) + 1) % 3;
-#endif
 			*cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
 			anim_cw(1 + new_lod);
+#endif
 			sensor_set_lod(new_lod);
 		}
 		if ((released & 0b10) != 0 && !lifted && hs) { // RMB released in HS mode
@@ -210,7 +212,11 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 #endif
 			}
 			if (ticks == 2*timeout_ticks) {
+#ifdef BOARD_M2K
+				anim_cw(_FLD2VAL(CONFIG_LOD, *cfg));
+#elif  BOARD_M3K
 				anim_cw(1 + _FLD2VAL(CONFIG_LOD, *cfg));
+#endif
 				if (hs) {
 					anim_pause(500);
 					anim_num(1 << (3 - _FLD2VAL(CONFIG_INTERVAL, *cfg)));
