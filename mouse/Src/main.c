@@ -371,9 +371,9 @@ int main(void) {
 		//104us at 160MHz
 #ifdef BOARD_M2K
 		if (hs_usb) {
-			delay_us(27);
+			delay_us(20);
 		} else {
-			delay_us(902);
+			delay_us(895);
 		}
 #elif  BOARD_M3K
 		if (hs_usb) {
