@@ -189,15 +189,25 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 		if (lifted && btn == 0b011) {
 			ticks++;
 			if (ticks == timeout_ticks) {
+#ifdef BOARD_M2K
+				// show DPI
+				// 10k steps (100 * 100)
+				anim_updown_pause((dpi + 1) / 100);
+				// 1k steps (100 * 10)
+				anim_rightleft_pause(((dpi + 1) % 100) / 10);
+				// 100 steps (100 * 1)
+				anim_downup_pause((((dpi + 1) % 100) % 10) / 1);
+#elif BOARD_M3K
 				// show DPI
 				// 10k steps (50 * 200)
-                anim_updown_pause((dpi + 1) / 200);
-                // 1k steps (50 * 20)
-                anim_rightleft_pause(((dpi + 1) % 200) / 20);
-                // 100 steps (50 * 2)
-                anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
-                // 50 steps (50 * 1)
-                anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
+				anim_updown_pause((dpi + 1) / 200);
+				// 1k steps (50 * 20)
+				anim_rightleft_pause(((dpi + 1) % 200) / 20);
+				// 100 steps (50 * 2)
+				anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
+				// 50 steps (50 * 1)
+				anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
+#endif
 			}
 			if (ticks == 2*timeout_ticks) {
 				anim_cw(1 + _FLD2VAL(CONFIG_LOD, *cfg));
@@ -222,15 +232,25 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 			ticks++;
 			if (ticks == timeout_ticks) {
 				if (mode == 1) {
+#ifdef BOARD_M2K
+					// show DPI
+					// 10k steps (100 * 100)
+					anim_updown_pause((dpi + 1) / 100);
+					// 1k steps (100 * 10)
+					anim_rightleft_pause(((dpi + 1) % 100) / 10);
+					// 100 steps (100 * 1)
+					anim_downup_pause((((dpi + 1) % 100) % 10) / 1);
+#elif BOARD_M3K
 					// show DPI
 					// 10k steps (50 * 200)
-                    anim_updown_pause((dpi + 1) / 200);
-                    // 1k steps (50 * 20)
-                    anim_rightleft_pause(((dpi + 1) % 200) / 20);
-                    // 100 steps (50 * 2)
-                    anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
-                    // 50 steps (50 * 1)
-                    anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
+					anim_updown_pause((dpi + 1) / 200);
+					// 1k steps (50 * 20)
+					anim_rightleft_pause(((dpi + 1) % 200) / 20);
+					// 100 steps (50 * 2)
+					anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
+					// 50 steps (50 * 1)
+					anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
+#endif
 				} else if (mode == 2) {
 					anim_cw(1 + _FLD2VAL(CONFIG_LOD, *cfg));
 					if (hs) {
@@ -309,6 +329,17 @@ int main(void) {
 	        	  new_cfg = (new_cfg & (~CONFIG_DPI_Msk)) | DPI_MAX;
 	          }
 
+#ifdef BOARD_M2K
+			  // Limit LOD to 2 and 3
+			  if ((_FLD2VAL(CONFIG_LOD, new_cfg) != 2) && (_FLD2VAL(CONFIG_LOD, new_cfg) != 3)) {
+			      new_cfg = (new_cfg & (~CONFIG_LOD_Msk)) | (2 << CONFIG_LOD_Pos);
+			  }
+#elif BOARD_M3K
+			  // Limit LOD to 0, 1 and 2
+			  if (!(_FLD2VAL(CONFIG_LOD, new_cfg) < 3) ) {
+			      new_cfg = (new_cfg & (~CONFIG_LOD_Msk)) | (2 << CONFIG_LOD_Pos);
+			  }
+#endif
 	          config_write(new_cfg);
 	        }
 
