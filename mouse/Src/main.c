@@ -298,6 +298,8 @@ int main(void) {
     int frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
     int frame_counter = 0;
 
+	delay_ms(500);
+
 	usb_init(hs_usb);
 	// frames_to_skip = 0 = 8000Hz = 8 / (0 + 1)  = 8 animation_scaling
 	// frames_to_skip = 1 = 4000Hz = 8 / (1 + 1)  = 4 animation_scaling
