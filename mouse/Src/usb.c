@@ -174,8 +174,7 @@ void usb_init(int hs_usb)
 			if (i == 0U) {
 				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
 			} else {
-				USBx_INEP(i)->DIEPCTL = USB_OTG_DOEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK;
-				//USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
+				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK;
 			}
 		} else {
 			USBx_INEP(i)->DIEPCTL = 0U;
