@@ -248,9 +248,6 @@ void usb_wait_configured2(void)
 	}
 }
 
-///char abcd[1000];
-///int a;
-
 /**
   * @brief  Check FIFO for the next packet to be loaded.
   * @param  hpcd PCD handle
@@ -380,9 +377,6 @@ static HAL_StatusTypeDef PCD_EP_OutSetupPacket_int(PCD_HandleTypeDef *hpcd, uint
   return HAL_OK;
 }
 
-///USBD_SetupReqTypedef stps[50];
-///int istp;
-
 void OTG_HS_EP1_IN_IRQHandler(void)
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
@@ -431,18 +425,17 @@ void OTG_HS_IRQHandler(void)
   uint32_t i, ep_intr, epint, epnum;
   uint32_t fifoemptymsk, temp;
   USB_OTG_EPTypeDef *ep;
-///  abcd[a++]=',';
+
      /* Handle RxQLevel Interrupt */
     if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_RXFLVL))
-    {///abcd[a++]='R';
+    {
       USB_MASK_INTERRUPT(hpcd.Instance, USB_OTG_GINTSTS_RXFLVL);
       temp = USBx->GRXSTSP;
       uint32_t pktsts = (temp & USB_OTG_GRXSTSP_PKTSTS) >> 17;
       ep = &hpcd.OUT_ep[temp & USB_OTG_GRXSTSP_EPNUM];
       if (pktsts == STS_SETUP_UPDT)
-      {///abcd[a++]='0'+pktsts;
+      {
         (void)USB_ReadPacket(USBx, (uint8_t *)hpcd.Setup, 8U);
-///USBD_ParseSetupRequest(&stps[istp++], (uint8_t *)hpcd.Setup);
         ep->xfer_count += (temp & USB_OTG_GRXSTSP_BCNT) >> 4;
       }  else if (pktsts == STS_DATA_UPDT) // Handle OUT data
       {
@@ -458,7 +451,7 @@ void OTG_HS_IRQHandler(void)
     }
 
     if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_OEPINT))
-    {///abcd[a++]='O';
+    {
       /* Read in the device interrupt bits */
       ep_intr = USB_ReadDevAllOutEpInterrupt(hpcd.Instance);
       for (epnum = 0; epnum < 1; epnum++)
@@ -468,13 +461,13 @@ void OTG_HS_IRQHandler(void)
           epint = USB_ReadDevOutEPInterrupt(hpcd.Instance, (uint8_t)epnum);
 
           if ((epint & USB_OTG_DOEPINT_XFRC) == USB_OTG_DOEPINT_XFRC)
-          {///abcd[a++]='1';
+          {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_XFRC);
             (void)PCD_EP_OutXfrComplete_int(&hpcd, epnum);
           }
 
           if ((epint & USB_OTG_DOEPINT_STUP) == USB_OTG_DOEPINT_STUP)
-          {///abcd[a++]='2';
+          {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_STUP);
             /* Class B setup phase done for previous decoded setup */
             (void)PCD_EP_OutSetupPacket_int(&hpcd, epnum);
@@ -484,7 +477,7 @@ void OTG_HS_IRQHandler(void)
     }
 
     if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_IEPINT))
-    {///abcd[a++]='I';
+    {
       /* Read in the device interrupt bits */
       ep_intr = USB_ReadDevAllInEpInterrupt(hpcd.Instance);
 
@@ -495,7 +488,7 @@ void OTG_HS_IRQHandler(void)
           epint = USB_ReadDevInEPInterrupt(hpcd.Instance, (uint8_t)epnum);
 
           if ((epint & USB_OTG_DIEPINT_XFRC) == USB_OTG_DIEPINT_XFRC)
-          {///abcd[a++]='1';
+          {
             fifoemptymsk = (uint32_t)(0x1UL << (epnum & EP_ADDR_MSK));
             USBx_DEVICE->DIEPEMPMSK &= ~fifoemptymsk;
 
@@ -505,7 +498,7 @@ void OTG_HS_IRQHandler(void)
           }
 
           if ((epint & USB_OTG_DIEPINT_TXFE) == USB_OTG_DIEPINT_TXFE)
-          {///abcd[a++]='6';
+          {
             (void)PCD_WriteEmptyTxFifo(&hpcd, epnum);
           }
         }
@@ -514,7 +507,7 @@ void OTG_HS_IRQHandler(void)
 
     /* Handle Resume Interrupt */
     if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_WKUINT))
-    {///abcd[a++]='W';
+    {
       /* Clear the Remote Wake-up Signaling */
       USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_RWUSIG;
       HAL_PCD_ResumeCallback(&hpcd);
@@ -523,7 +516,7 @@ void OTG_HS_IRQHandler(void)
 
     /* Handle Suspend Interrupt */
     if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_USBSUSP))
-    {///abcd[a++]='S';
+    {
       if ((USBx_DEVICE->DSTS & USB_OTG_DSTS_SUSPSTS) == USB_OTG_DSTS_SUSPSTS) {
         HAL_PCD_SuspendCallback(&hpcd);
       }
@@ -531,7 +524,7 @@ void OTG_HS_IRQHandler(void)
     }
 
     /* Handle Reset Interrupt */
-    if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_USBRST)) {///abcd[a++]='T';
+    if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_USBRST)) {
       USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_RWUSIG;
       FlushTxFifo(hpcd.Instance, 0x10);
       for (i = 0U; i < hpcd.Init.dev_endpoints; i++) {
@@ -552,7 +545,7 @@ void OTG_HS_IRQHandler(void)
 
     /* Handle Enumeration done Interrupt */
     if (__HAL_PCD_GET_FLAG(&hpcd, USB_OTG_GINTSTS_ENUMDNE))
-    {///abcd[a++]='E';
+    {
       (void)USB_ActivateSetup(hpcd.Instance);
       hpcd.Init.speed = USB_GetDevSpeed(hpcd.Instance);
       /* Set USB Turnaround time */
