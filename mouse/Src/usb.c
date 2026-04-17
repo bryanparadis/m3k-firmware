@@ -532,7 +532,7 @@ void OTG_HS_IRQHandler(void)
       }
       USBx_DEVICE->DAINTMSK |= 0x10003U;
       USBx_DEVICE->DOEPMSK |= USB_OTG_DOEPMSK_STUPM | USB_OTG_DOEPMSK_XFRCM;
-      USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;// | USB_OTG_DIEPMSK_ITTXFEMSK;
+      USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_XFRCM;
 	  USBx_DEVICE->DCFG &= ~USB_OTG_DCFG_DAD; /* Set Default Address to 0 */
       (void)USB_EP0_OutStart(hpcd.Instance); /* setup EP0 to receive SETUP packets */
       __HAL_PCD_CLEAR_FLAG(&hpcd, USB_OTG_GINTSTS_USBRST);
