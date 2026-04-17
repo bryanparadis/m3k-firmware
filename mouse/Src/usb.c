@@ -208,7 +208,7 @@ void usb_init(int hs_usb)
 	hpcd.Instance->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
 	hpcd.Instance->GINTMSK |= USB_OTG_GINTMSK_USBSUSPM | USB_OTG_GINTMSK_USBRST |
 				   USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_IEPINT |
-				   USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_WUIM | USB_OTG_GINTMSK_SOFM; // TODO Something odd going on we don't use SOF but shit doesn't work without it.
+				   USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_WUIM;
 
 	if (hpcd.Init.vbus_sensing_enable == 1U) {
 		hpcd.Instance->GINTMSK |= (USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_OTGINT);
@@ -429,16 +429,6 @@ void OTG_HS_IRQHandler(void)
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
-
-    // TODO This needs some investigation.
-  	// Handle SOF
-	if ((USB_OTG_HS->GINTSTS & USB_OTG_GINTSTS_SOF) != 0) {
-		// This was |= and returning which would have been affecting more than just pending SOFs
-		USB_OTG_HS->GINTSTS = USB_OTG_GINTSTS_SOF;
-
-	    //return;
-	}
-
   uint32_t i, ep_intr, epint, epnum;
   uint32_t fifoemptymsk, temp;
   USB_OTG_EPTypeDef *ep;
