@@ -113,6 +113,11 @@ void usb_init(int hs_usb)
 	HAL_Delay(2);
 	// USB_CoreReset(USBx)
 	while ((hpcd.Instance->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0U);
+	// Wait at least 3 PHY clocks after AHB idle before CSRST.
+	// Using register reads prevents being optimized out by the compiler and guarantees ordering
+	(void)hpcd.Instance->GRSTCTL;
+	(void)hpcd.Instance->GRSTCTL;
+	(void)hpcd.Instance->GRSTCTL;
 	hpcd.Instance->GRSTCTL |= USB_OTG_GRSTCTL_CSRST;
 	while ((hpcd.Instance->GRSTCTL & USB_OTG_GRSTCTL_CSRST) == USB_OTG_GRSTCTL_CSRST);
 	// USB_SetCurrentMode(hpcd->Instance, USB_DEVICE_MODE)
