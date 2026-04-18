@@ -38,6 +38,9 @@ static void clk_init(void)
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     MODIFY_REG(PWR->CR1, PWR_CR1_VOS, _VAL2FLD(PWR_CR1_VOS, 0b01)); //scale 3 power
 
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_1WS); // flash latency for 32MHz
+	(void)FLASH->ACR; // Guarantees that flash latency has been set before changing the sysclk
+
     // configure PLL for 32MHz sysclk
     MODIFY_REG(RCC->PLLCFGR,
          RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ,
@@ -46,8 +49,6 @@ static void clk_init(void)
     );
     RCC->CR |= RCC_CR_PLLON; // enable PLL
     while ((RCC->CR & RCC_CR_PLLRDY) == 0);
-
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_1WS); // flash latency for 32MHz
 
     /* Set the highest APBx dividers in order to ensure that we do not go through
        a non-spec phase whatever we decrease or increase HCLK. */
@@ -77,6 +78,9 @@ static void clk_init(void)
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     MODIFY_REG(PWR->CR1, PWR_CR1_VOS, _VAL2FLD(PWR_CR1_VOS, 0b10)); // Scale 2 for 64 MHz
 
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_2WS); // Flash latency for 64 MHz
+	(void)FLASH->ACR; // Guarantees that flash latency has been set before changing the sysclk
+
     // Configure PLL for 64 MHz SYSCLK and 48 MHz USB clock (HSE = 24 MHz)
     MODIFY_REG(RCC->PLLCFGR,
          RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ,
@@ -85,8 +89,6 @@ static void clk_init(void)
     );
     RCC->CR |= RCC_CR_PLLON; // enable PLL
     while ((RCC->CR & RCC_CR_PLLRDY) == 0);
-
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_2WS); // Flash latency for 64 MHz
 
     /* Set the highest APBx dividers to ensure safe clock transitions */
     MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, RCC_CFGR_PPRE1_DIV16);
@@ -114,6 +116,9 @@ static void clk_init(void)
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     MODIFY_REG(PWR->CR1, PWR_CR1_VOS, _VAL2FLD(PWR_CR1_VOS, 0b11)); // Scale 1 for 160 MHz
 
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_5WS); // 5WS for 160 MHz
+	(void)FLASH->ACR; // Guarantees that flash latency has been set before changing the sysclk
+
     // Main PLL: SYSCLK = 160 MHz
     MODIFY_REG(RCC->PLLCFGR,
         RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ,
@@ -131,8 +136,6 @@ static void clk_init(void)
     RCC->CR |= RCC_CR_PLLSAION;
     while ((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
     RCC->DCKCFGR2 |= RCC_DCKCFGR2_CK48MSEL; // Select PLLSAI_Q for 48 MHz USB
-
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_5WS); // 5WS for 160 MHz
 
     MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, RCC_CFGR_PPRE1_DIV16);
     MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2, RCC_CFGR_PPRE2_DIV16);
