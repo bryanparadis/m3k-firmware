@@ -32,12 +32,14 @@ USBD_HandleTypeDef USBD_Device;
 
 static void FlushRxFifo(USB_OTG_GlobalTypeDef *USBx)
 {
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0U);
   USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH);
 }
 
 static void FlushTxFifo(USB_OTG_GlobalTypeDef *USBx, uint32_t num)
 {
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0U);
   USBx->GRSTCTL = (USB_OTG_GRSTCTL_TXFFLSH | (num << 6));
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH);
 }
