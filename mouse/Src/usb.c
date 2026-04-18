@@ -243,13 +243,6 @@ void usb_wait_configured(void)
 		__WFI();
 }
 
-void usb_wait_configured2(void)
-{
-	while (USBD_Device.dev_state != USBD_STATE_CONFIGURED){
-
-	}
-}
-
 /**
   * @brief  Check FIFO for the next packet to be loaded.
   * @param  hpcd PCD handle
