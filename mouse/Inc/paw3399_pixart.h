@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+// All current sensor code is in sensor.h and this just documents pixarts settings
+
 #pragma once
 
 #include <stdint.h>
