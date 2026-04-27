@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := all
+
 CMSIS = ../CMSIS_5/CMSIS/Core/Include
 CMSIS_F7 = ../cmsis-device-f7
 
@@ -37,7 +39,7 @@ m3k: TARGET := m3k
 m3k: DEFINES += -DBOARD_M3K -DSTM32F723xx
 m3k: STARTUP +=	$(CMSIS_F7)/Source/Templates/gcc/startup_stm32f723xx.s 
 m3k: m3k.output
-
+all: m2k m3k
 
 %.output:
 	$(CC) $(CFLAGS) \
