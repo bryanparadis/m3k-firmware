@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
-CMSIS = ../CMSIS_5/CMSIS/Core/Include
-CMSIS_F7 = ../cmsis-device-f7
+CMSIS = ../third_party/CMSIS_5/CMSIS/Core/Include
+CMSIS_F7 = ../third_party/cmsis-device-f7
 
 CC      := arm-none-eabi-gcc
 OBJCOPY := arm-none-eabi-objcopy
