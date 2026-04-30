@@ -71,20 +71,10 @@ dfu-util -a 0 -s 0x08008000 -D "<firmware bin file>"
 ```
 
 # Unbricking your mouse
-If you flashed a bad bootloader or accidentally overwrote bootloader with firmware you can unbrick your mouse. You will need a ST-Link or another SWD programmer connected to VCC, SWDIO, SWCLK and GND pins located on the PCB
+If you flashed a bad bootloader or accidentally overwrote bootloader with firmware you can unbrick your mouse. You will need a ST-Link or another SWD programmer connected to 3V3, SWDIO, SWCLK and GND pins located on the PCB
 
 ### M2K Pinout
-```
-VCC   VDDA
-SWCLK PA14
-SWDIO PA13
-GND   GND
-```
+![Picture of M2K SWD Pinout](resources/m2k_swd_pinout.jpg)
 
 ### M3K Pinout
-```
-VCC   +3V3
-SWCLK SWCLK
-SWDIO SWDIO
-GND   GND
-```
+![Picture of M3K SWD Pinout](resources/m3k_swd_pinout.jpg)
