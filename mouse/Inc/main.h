@@ -29,7 +29,8 @@ typedef union {
 		uint8_t report;
 		uint8_t btn;
 		int8_t whl;
-		int16_t x, y;
+		int16_t x;
+		int16_t y;
 		uint8_t _pad; // zero pad to 8 bytes total
 	};
 	uint8_t u8[8]; // btn, wheel, xlo, xhi, ylo, yhi, 0, 0

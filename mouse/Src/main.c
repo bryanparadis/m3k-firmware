@@ -38,13 +38,13 @@
 #define TIMEOUT_SECS 5 // seconds of holding buttons for programming mode
 
 // used in usb.c via extern in main.h
-volatile Usb_packet packet = {{1,0,0,0,0}}; // packet in progress will be sent next
+volatile Usb_packet packet = {{1,0,0,0,0,0}}; // packet in progress will be sent next
 uint8_t volatile ready = 0;
 uint8_t volatile sync = 0;
 uint8_t volatile update_cfg = 0;
 uint8_t volatile cfg_bytes[5];
 uint8_t count = 0;
-Usb_packet last_packet = {{1,0,0,0,0}};
+Usb_packet last_packet = {{1,0,0,0,0,0}};
 
 static Config config_boot(void) {
 	// update config depending on initial buttons
