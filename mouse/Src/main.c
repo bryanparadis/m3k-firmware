@@ -117,7 +117,7 @@ static inline uint32_t mode_process(Config *cfg, int *skip,
 	// frames_to_skip 1 = 4000Hz = 40000/(1+1) = 20000 timeout ticks
 	// frames_to_skip 3 = 2000Hz = 40000/(3+1) = 10000 timeout ticks
 	// frames_to_skip 7 = 1000Hz = 40000/(7+1) =  5000 timeout ticks
-	const int timeout_ticks = TIMEOUT_SECS * (hs ? (8000 /(*skip + 1)) : 1000);
+	const uint32_t timeout_ticks = TIMEOUT_SECS * (hs ? (8000 /(*skip + 1)) : 1000);
 
 	// typically squal in 60s for lifted 3399.
 	const int SQUAL_THRESH = 75;
