@@ -44,19 +44,19 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include <m3k_resource.h>
+#include "board.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_conf.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define USBD_VID                      M3K_USB_VID
-#define USBD_PID                      0xDF11
+#define USBD_VID                      USB_VID
+#define USBD_PID                      USB_PID
 #define USBD_LANGID_STRING            0x409
-#define USBD_MANUFACTURER_STRING      M3K_USB_MFG
-#define USBD_PRODUCT_HS_STRING        M3K_USB_NAME " DFU Mode"
-#define USBD_PRODUCT_FS_STRING        M3K_USB_NAME " DFU Mode"
+#define USBD_MANUFACTURER_STRING      USB_MFG
+#define USBD_PRODUCT_HS_STRING        USB_NAME
+#define USBD_PRODUCT_FS_STRING        USB_NAME
 #define USBD_CONFIGURATION_HS_STRING  "DFU Config"
 #define USBD_INTERFACE_HS_STRING      "DFU Interface"
 #define USBD_CONFIGURATION_FS_STRING  "DFU Config"

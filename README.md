@@ -25,24 +25,28 @@ sudo apt update
 sudo apt install git build-essential arm-none-eabi-binutils arm-none-eabi-gcc libnewlib-arm-none-eabi
 ```
 ## Get the sources
+
 ```bash
 git clone https://github.com/zaunkoenig-firmware/m3k-firmware
 cd m3k-firmware
 git submodule update --init --recursive
 ```
-## Build the bootloader
+## Building
+You can target just m2k or m3k via `make <target>`. By default it will build both.
+
+## Bootloader
 ```bash
 cd bootloader
 make
 ```
-## Build the firmware
+## Firmware
 ```bash
 cd mouse
 make
 ```
 
 ## Output
-`make` will produce a bootloader.bin/bootloader.elf or m2k.bin/m2k.elf/m3k.bin/m3k.elf. You can target just m2k or m3k via `make <target>`. Currently the bootloader is the same for both the M2K and the M3K.
+`make` will produce a bin and elf file. You will find them in the current directory named after the model. Ex: `m3k.elf` or `m2k_bootlader.bin`
 
 # Flashing
 You can flash the firmware many different ways. Flashing to the wrong address could brick the device. Unbricking the device is a bit of a pain so flashing elf files is recommended. The elf files contain the address they are targeting and cannot be flashed to the wrong one.
