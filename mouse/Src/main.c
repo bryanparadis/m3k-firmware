@@ -452,7 +452,8 @@ int main(void) {
 		// Save for next loop
 		btn_unmasked_prev = btn_unmasked;
 
-		if (anim_running) {
+		// TODO: Fixed a bug that caused this to always be true. So need to verify behavior
+		if (anim_running()) {
 		// Add animation x and y data
 			const struct Xy a = anim_read(); // returns 0 if no animation left or when scaling
 			packet.x += a.x;
