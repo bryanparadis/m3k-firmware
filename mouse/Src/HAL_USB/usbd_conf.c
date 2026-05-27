@@ -496,13 +496,7 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
     return;
 
   uint8_t *pdata = hpcd->IN_ep[epnum].xfer_buff;
-
-
-
   USBD_EndpointTypeDef *pep;
-//  USBD_StatusTypeDef ret;
-///  extern char abcd[1000];
-///  extern int a;
 
   if (epnum == 0U)
   {
@@ -511,7 +505,7 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
     if (pdev->ep0_state == USBD_EP0_DATA_IN)
     {
       if (pep->rem_length > pep->maxpacket)
-      {///abcd[a++]='x';
+      {
         pep->rem_length -= pep->maxpacket;
 
         (void)USBD_CtlContinueSendData(pdev, pdata, pep->rem_length);
@@ -525,7 +519,7 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
         if ((pep->maxpacket == pep->rem_length) &&
             (pep->total_length >= pep->maxpacket) &&
             (pep->total_length < pdev->ep0_data_len))
-        {///abcd[a++]='y';
+        {
           (void)USBD_CtlContinueSendData(pdev, NULL, 0U);
           pdev->ep0_data_len = 0U;
 
@@ -533,7 +527,7 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
           (void)USBD_LL_PrepareReceive(pdev, 0U, NULL, 0U);
         }
         else
-        {///abcd[a++]='z';
+        {
           if ((pdev->pClass->EP0_TxSent != NULL) &&
               (pdev->dev_state == USBD_STATE_CONFIGURED))
           {
