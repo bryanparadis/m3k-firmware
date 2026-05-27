@@ -71,10 +71,9 @@ uint8_t *USBD_DFU_ProductStrDescriptor (USBD_SpeedTypeDef speed, uint16_t *lengt
 uint8_t *USBD_DFU_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 uint8_t *USBD_DFU_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 uint8_t *USBD_DFU_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
+uint8_t *USBD_DFU_MSOS1StrDescriptor(USBD_SpeedTypeDef speed , uint16_t *length);
 uint8_t *USBD_DFU_BOSDescriptor(USBD_SpeedTypeDef speed , uint16_t *length);
-uint8_t *USBD_DFU_MSOS2StrDescriptor(USBD_SpeedTypeDef speed , uint16_t *length);
 uint8_t *USBD_DFU_MSOS2Descriptor(USBD_SpeedTypeDef speed , uint16_t *length);
-
 
 /* Private variables ---------------------------------------------------------*/
 USBD_DescriptorsTypeDef DFU_Desc = {
@@ -85,78 +84,10 @@ USBD_DescriptorsTypeDef DFU_Desc = {
   USBD_DFU_SerialStrDescriptor,
   USBD_DFU_ConfigStrDescriptor,
   USBD_DFU_InterfaceStrDescriptor,
+  USBD_DFU_MSOS1StrDescriptor,
   USBD_DFU_BOSDescriptor,
-  USBD_DFU_MSOS2StrDescriptor,
   USBD_DFU_MSOS2Descriptor
 };
-
-
-/*
-0x05,       // bLength
-0x0F,       // bDescriptorType (BOS)
-0x19, 0x00, // wTotalLength (25 bytes)
-0x01,       // bNumDeviceCaps
-0x14,       // bLength (20 bytes)
-0x10,       // bDescriptorType (Device Capability)
-0x05,       // bDevCapabilityType (Platform)
-0x00,       // bReserved
-0xDF, 0x60, 0xDD, 0xD8, 0x89, 0x45, 0xC7, 0x4C, 0x9C, 0xD2, 0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F, // UUID
-0x00, 0x00, 0x03, 0x06, // dwWindowsVersion (0x06030000)
-0x1E, 0x00,             // wMSOSDescriptorSetTotalLength (30 bytes)
-0x05,                   // bMS_VendorCode
-0x00                    // bAltEnumCmd
-0x00                    // bAltEnumCmd
-*/
-
-/*
-  // BOS Descriptor Header
-  0x05,                   // bLength = 5 bytes
-  0x0F,                   // bDescriptorType = BOS
-  0x20, 0x00,             // wTotalLength = 22 bytes (total length of BOS descriptor including capabilities)
-  0x02,                   // bNumDeviceCaps = 2 (USB 2.0 Extension + MS OS 2.0 Capability)
-
-  // USB 2.0 Extension Descriptor (required for MS OS 2.0 support)
-  0x07,                   // bLength = 7 bytes
-  0x10,                   // bDescriptorType = DEVICE_CAPABILITY
-  0x02,                   // bDevCapabilityType = USB 2.0 EXTENSION
-  0x00, 0x00, 0x00, 0x00, // bmAttributes: LPM support (optional, set to 0x02 for compatibility)
-
-  // Microsoft OS 2.0 Platform Capability Descriptor
-  0x14,                   // bLength = 20 bytes
-  0x10,                   // bDescriptorType = DEVICE_CAPABILITY
-  0x05,                   // bDevCapabilityType = PLATFORM
-  0x00,                   // bReserved
-  0xDF, 0x60, 0xDD, 0xD8, // MS OS 2.0 Platform Capability UUID:
-  0x89, 0x45, 0xC7, 0x4C, // {D8DD60DF-4589-4CC7-9CD2-659D9E648A9F}
-  0xD2, 0x9C, 0x65, 0x9D,
-  0x9E, 0x64, 0x8A, 0x9F
-  */
-
-  /*
-  // BOS Descriptor Header
-  0x05,                   // bLength = 5 bytes
-  0x0F,                   // bDescriptorType = BOS
-  0x22, 0x00,             // wTotalLength = 34 bytes (total length of BOS descriptor including capabilities)
-  0x02,                   // bNumDeviceCaps = 2 (USB 2.0 Extension + MS OS 2.0 Capability)
-
-  // USB 2.0 Extension Descriptor (required for MS OS 2.0 support)
-  0x07,                   // bLength = 7 bytes
-  0x10,                   // bDescriptorType = DEVICE_CAPABILITY
-  0x02,                   // bDevCapabilityType = USB 2.0 EXTENSION
-  0x00, 0x00, 0x00, 0x00, // bmAttributes: LPM support (set to 0x00 as your device doesn't support LPM)
-
-  // Microsoft OS 2.0 Platform Capability Descriptor
-  0x16,                   // bLength = 22 bytes (20 bytes + 2 additional bytes for bMS_VendorCode and bAltEnumCmd)
-  0x10,                   // bDescriptorType = DEVICE_CAPABILITY
-  0x05,                   // bDevCapabilityType = PLATFORM
-  0x00,                   // bReserved
-  0xDF, 0x60, 0xDD, 0xD8, // MS OS 2.0 Platform Capability UUID:
-  0x89, 0x45, 0xC7, 0x4C, // {D8DD60DF-4589-4CC7-9CD2-659D9E648A9F}
-  0xD2, 0x9C, 0x65, 0x9D,
-  0x9E, 0x64, 0x8A, 0x9F,
-  0xEE,                   // bMS_VendorCode (matches bRequest in C0 EE requests)
-  0x00
-  */                   // bAltEnumCmd (0x00 = no alternate enumeration)
 
 /* USB Device DFU BOS descriptor */
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
@@ -184,8 +115,6 @@ __ALIGN_BEGIN  uint8_t USBD_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
 		0x00                    // bAltEnumCmd
 };
 
-
-
 /* USB Device DFU MS OS 2.0 descriptor */
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
 #pragma data_alignment=4
@@ -206,23 +135,20 @@ __ALIGN_BEGIN  uint8_t USBD_MSOS2Desc[USB_SIZ_MSOS2_DESC] __ALIGN_END =
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // SubCompatibleID: all zeros
 };
 
+// MS OS 1.0
 // This is the old way via 0xEE string descriptor.
-// It worked so leaving it here in case we have to fall back to this method
-#if 0
-/* USB Device DFU MS OS 2.0 string descriptor */
+// Not currently used but worked fine. Leaving here for future reference
+/* USB Device DFU MS OS 1.0 string descriptor */
 #if defined ( __ICCARM__ ) //!< IAR Compiler */
 #pragma data_alignment=4
 #endif /* __ICCARM__ */
-__ALIGN_BEGIN  uint8_t USBD_MSOS2StrDesc[USB_SIZ_MSOS2_STR_DESC] __ALIGN_END =
+__ALIGN_BEGIN  uint8_t USBD_MSOS1StrDesc[USB_SIZ_MSOS1_STR_DESC] __ALIGN_END =
 {
   0x12, 0x03, // Length = 18, Type = STRING
   'M', 0x00, 'S', 0x00, 'F', 0x00, 'T', 0x00, // "MSFT100"
   '1', 0x00, '0', 0x00, '0', 0x00,
   0xEE, 0x00  // bMS_VendorCode = 0xEE, bPad
 };
-#endif
-
-
 
 /* USB Standard Device Descriptor */
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
@@ -401,16 +327,16 @@ uint8_t *USBD_DFU_BOSDescriptor(USBD_SpeedTypeDef speed , uint16_t *length)
 }
 
 /**
-  * @brief  USBD_DFU_MSOS2Descriptor
-  *         return the MS OS 2.0 descriptor
+  * @brief  USBD_DFU_MSOS1StrDescriptor
+  *         return the MS OS 1.0 string descriptor
   * @param  speed : current device speed
   * @param  length : pointer to data length variable
   * @retval pointer to descriptor buffer
   */
-uint8_t *USBD_DFU_MSOS2StrDescriptor(USBD_SpeedTypeDef speed , uint16_t *length)
+uint8_t *USBD_DFU_MSOS1StrDescriptor(USBD_SpeedTypeDef speed , uint16_t *length)
 {
-  *length = sizeof(USBD_MSOS2StrDesc);
-  return (uint8_t*)USBD_MSOS2StrDesc;
+  *length = sizeof(USBD_MSOS1StrDesc);
+  return (uint8_t*)USBD_MSOS1StrDesc;
 }
 
 

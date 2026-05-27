@@ -111,12 +111,9 @@ USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
 
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
-
-
   case USB_REQ_TYPE_CLASS:
   case USB_REQ_TYPE_VENDOR:
 	  if (req->bmRequest == 0xC0U && req->bRequest == 0xEEU && req->wIndex == 0x0007U) {
-		  //USBD_GetDescriptor(pdev, req);
 		  pbuf = pdev->pDesc->GetMSOS2Descriptor(pdev->dev_speed, &len);
 		  (void)USBD_CtlSendData(pdev, pbuf, len);
 	  } else {
@@ -505,10 +502,11 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
         err++;
       }
       break;
-      // This is the old way via 0xEE string descriptor.
-      // It worked so leaving it here in case we have to fall back to this method
 #if 0
-	case USB_IDX_MSOS2_STR:
+	// MS OS 1.0
+	// This is the old way via 0xEE string descriptor.
+	// Not currently used but worked fine. Leaving here for future reference
+	case USB_IDX_MSOS1_STR:
 	  if (pdev->pDesc->GetMSOS2StrDescriptor != NULL)
 	    {
 		  pbuf = pdev->pDesc->GetMSOS2StrDescriptor(pdev->dev_speed, &len);
