@@ -252,33 +252,24 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   UNUSED(cfgidx);
 
-  USBD_DFU_HandleTypeDef *hdfu;
+  static USBD_DFU_HandleTypeDef hdfu;
 
-  /* Allocate Audio structure */
-  hdfu = USBD_malloc(sizeof(USBD_DFU_HandleTypeDef));
+  pdev->pClassData = &hdfu;
 
-  if (hdfu == NULL)
-  {
-    pdev->pClassData = NULL;
-    return (uint8_t)USBD_EMEM;
-  }
+  hdfu.alt_setting = 0U;
+  hdfu.data_ptr = USBD_DFU_APP_DEFAULT_ADD;
+  hdfu.wblock_num = 0U;
+  hdfu.wlength = 0U;
 
-  pdev->pClassData = (void *)hdfu;
+  hdfu.manif_state = DFU_MANIFEST_COMPLETE;
+  hdfu.dev_state = DFU_STATE_IDLE;
 
-  hdfu->alt_setting = 0U;
-  hdfu->data_ptr = USBD_DFU_APP_DEFAULT_ADD;
-  hdfu->wblock_num = 0U;
-  hdfu->wlength = 0U;
-
-  hdfu->manif_state = DFU_MANIFEST_COMPLETE;
-  hdfu->dev_state = DFU_STATE_IDLE;
-
-  hdfu->dev_status[0] = DFU_ERROR_NONE;
-  hdfu->dev_status[1] = 0U;
-  hdfu->dev_status[2] = 0U;
-  hdfu->dev_status[3] = 0U;
-  hdfu->dev_status[4] = DFU_STATE_IDLE;
-  hdfu->dev_status[5] = 0U;
+  hdfu.dev_status[0] = DFU_ERROR_NONE;
+  hdfu.dev_status[1] = 0U;
+  hdfu.dev_status[2] = 0U;
+  hdfu.dev_status[3] = 0U;
+  hdfu.dev_status[4] = DFU_STATE_IDLE;
+  hdfu.dev_status[5] = 0U;
 
   /* Initialize Hardware layer */
   if (((USBD_DFU_MediaTypeDef *)pdev->pUserData)->Init() != USBD_OK)

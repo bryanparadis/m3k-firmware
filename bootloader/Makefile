@@ -15,7 +15,7 @@ DEFINES = -DHSE_VALUE=24000000U -DUSE_USB_HS
 
 INCLUDE = -I$(CMSIS) -I$(CMSIS_F7)/Include -IInc -IInc/HAL
 
-LDFLAGS = -TSTM32F730I8KX_FLASH.ld -Wl,--gc-sections --specs=nosys.specs --specs=nano.specs
+LDFLAGS = -TSTM32F730I8KX_FLASH.ld -Wl,--gc-sections --specs=nano.specs # -Wl,-Map=boot.map
 
 SOURCES = $(wildcard Src/*.c) \
 		  $(wildcard Src/HAL/*.c)
