@@ -190,6 +190,8 @@ uint8_t *Flash_If_Read(uint8_t *src, uint8_t *dest, uint32_t Len)
   */
 uint16_t Flash_If_GetStatus(uint32_t Add, uint8_t Cmd, uint8_t *buffer)
 {
+  (void) Add;
+
   switch(Cmd)
   {
   case DFU_MEDIA_PROGRAM:
