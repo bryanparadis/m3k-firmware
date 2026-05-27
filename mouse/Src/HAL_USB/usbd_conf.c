@@ -549,11 +549,11 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 #endif
     }
 
-//    if (pdev->dev_test_mode == 1U)
-//    {
-//      (void)USBD_RunTestMode(pdev);
-//      pdev->dev_test_mode = 0U;
-//    }
+    if (pdev->dev_test_mode != 0U)
+    {
+      (void)USBD_RunTestMode(pdev);
+      pdev->dev_test_mode = 0U;
+    }
   }
   else if ((pdev->pClass->DataIn != NULL) &&
            (pdev->dev_state == USBD_STATE_CONFIGURED))
@@ -1116,6 +1116,51 @@ uint8_t USBD_LL_IsStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
     return hpcd->OUT_ep[ep_addr & 0x7F].is_stall;
   }
 }
+
+/**
+  * @brief  Set the USB Device high speed test mode.
+  * @param  hpcd PCD handle
+  * @param  testmode USB Device high speed test mode
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_PCD_SetTestMode(PCD_HandleTypeDef *hpcd, uint8_t testmode)
+{
+  const USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
+  uint32_t USBx_BASE = (uint32_t)USBx;
+
+  switch (testmode)
+  {
+    case TEST_J:
+    case TEST_K:
+    case TEST_SE0_NAK:
+    case TEST_PACKET:
+    case TEST_FORCE_EN:
+      USBx_DEVICE->DCTL |= (uint32_t)testmode << 4;
+      break;
+
+    default:
+      break;
+  }
+
+  return HAL_OK;
+}
+
+USBD_StatusTypeDef USBD_LL_SetTestMode(USBD_HandleTypeDef *pdev, uint8_t testmode)
+{
+
+  return HAL_PCD_SetTestMode(pdev->pData, testmode);
+}
+
+USBD_StatusTypeDef USBD_RunTestMode(USBD_HandleTypeDef  *pdev)
+{
+  USBD_StatusTypeDef ret;
+
+  /* Run USB HS test mode */
+  ret = USBD_LL_SetTestMode(pdev, pdev->dev_test_mode);
+
+  return ret;
+}
+
 #if 0
 /**
   * @brief  Assigns a USB address to the device.

@@ -787,6 +787,15 @@ static void USBD_SetFeature(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
     pdev->dev_remote_wakeup = 1U;
     (void)USBD_CtlSendStatus(pdev);
   }
+  else if (req->wValue == USB_FEATURE_TEST_MODE)
+  {
+    pdev->dev_test_mode = (uint8_t)(req->wIndex >> 8);
+    (void)USBD_CtlSendStatus(pdev);
+  }
+  else
+  {
+    USBD_CtlError(pdev, req);
+  }
 }
 
 

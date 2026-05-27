@@ -395,6 +395,12 @@ typedef struct
 #define GRXSTS_PKTSTS_DATA_TOGGLE_ERR          5U
 #define GRXSTS_PKTSTS_CH_HALTED                7U
 
+#define TEST_J                                 1U
+#define TEST_K                                 2U
+#define TEST_SE0_NAK                           3U
+#define TEST_PACKET                            4U
+#define TEST_FORCE_EN                          5U
+
 #define USBx_PCGCCTL    *(__IO uint32_t *)((uint32_t)USBx_BASE + USB_OTG_PCGCCTL_BASE)
 #define USBx_HPRT0      *(__IO uint32_t *)((uint32_t)USBx_BASE + USB_OTG_HOST_PORT_BASE)
 
