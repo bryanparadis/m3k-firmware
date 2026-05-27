@@ -127,7 +127,7 @@ void usb_init(int hs_usb)
 	hpcd.Instance->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
 	HAL_Delay(50U);
 	// HAL_PCD_Init
-	for (int i = 0; i < hpcd.Init.dev_endpoints; i++) {
+	for (uint32_t i = 0; i < hpcd.Init.dev_endpoints; i++) {
 		hpcd.IN_ep[i].is_in = 1U;
 		hpcd.IN_ep[i].num = i;
 		hpcd.IN_ep[i].tx_fifo_num = i;
@@ -173,7 +173,7 @@ void usb_init(int hs_usb)
 	USBx_DEVICE->DOEPMSK = 0U;
 	USBx_DEVICE->DAINTMSK = 0U;
 
-	for (int i = 0; i < hpcd.Init.dev_endpoints; i++) {
+	for (uint32_t i = 0; i < hpcd.Init.dev_endpoints; i++) {
 		if ((USBx_INEP(i)->DIEPCTL & USB_OTG_DIEPCTL_EPENA) == USB_OTG_DIEPCTL_EPENA) {
 			if (i == 0U) {
 				USBx_INEP(i)->DIEPCTL = USB_OTG_DIEPCTL_SNAK;
@@ -186,7 +186,7 @@ void usb_init(int hs_usb)
 		USBx_INEP(i)->DIEPTSIZ = 0U;
 		USBx_INEP(i)->DIEPINT  = 0xFB7FU;
 	}
-	for (int i = 0; i < hpcd.Init.dev_endpoints; i++) {
+	for (uint32_t i = 0; i < hpcd.Init.dev_endpoints; i++) {
 		if ((USBx_OUTEP(i)->DOEPCTL & USB_OTG_DOEPCTL_EPENA) == USB_OTG_DOEPCTL_EPENA) {
 			if (i == 0U) {
 				USBx_OUTEP(i)->DOEPCTL = USB_OTG_DOEPCTL_SNAK;
