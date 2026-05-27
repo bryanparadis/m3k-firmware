@@ -78,6 +78,8 @@ dfu-util -a 0 -s 0x08008000 -D "<firmware bin file>"
 If you flashed a bad bootloader or accidentally overwrote bootloader with firmware you can unbrick your mouse. You will need a ST-Link or another SWD programmer connected to 3V3, SWDIO, SWCLK and GND pins located on the PCB
 
 ### Flashing with St-Link V3 over SWD
+With a real St-Link you want to power the mouse via USB because it does not output VCC but detects VCC. Knock off St-Links actually provide power on their 3v3 and 5v pins. Leave these disconnected and use the USB power.
+
 ```bash
 sudo ~/stm32/cubeprogrammer/bin/./STM32_Programmer_CLI -c port=SWD freq=200 -d <bootloader elf file>
 ```
