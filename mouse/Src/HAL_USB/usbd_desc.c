@@ -258,7 +258,7 @@ static void Get_SerialNum(void)
     IntToUnicode (deviceserial1, &USBD_StringSerial[18] ,4);
   }
   // append firmware version
-  for (int i = 0; i < sizeof(FW_VERSION_FORMATTED) - 1; i++)
+  for (size_t i = 0; i < sizeof(FW_VERSION_FORMATTED) - 1; i++)
   {
 	USBD_StringSerial[26 + 2*i] = FW_VERSION_FORMATTED[i];
 	USBD_StringSerial[26 + 2*i + 1] = 0U;
