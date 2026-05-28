@@ -124,6 +124,18 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
                        LL Driver Callbacks (PCD -> USB Device Library)
 *******************************************************************************/
 
+static USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
+{
+  switch (hal_status)
+  {
+    case HAL_OK:        return USBD_OK;
+    case HAL_ERROR:     return USBD_FAIL;
+    case HAL_BUSY:      return USBD_BUSY;
+    case HAL_TIMEOUT:   return USBD_FAIL;
+    default:            return USBD_FAIL;
+  }
+}
+
 /**
   * @brief  SetupStage callback.
   * @param  hpcd: PCD handle
@@ -777,7 +789,7 @@ USBD_StatusTypeDef USBD_LL_SetUSBAddress(USBD_HandleTypeDef *pdev, uint8_t addre
   hpcd->USB_Address = address;
   (void)USB_SetDevAddress(hpcd->Instance, address);
   __HAL_UNLOCK(hpcd);
-  return HAL_OK;
+  return USBD_OK;
 }
 /**
   * @brief  Open and configure an endpoint.
@@ -793,7 +805,7 @@ USBD_StatusTypeDef USBD_LL_OpenEP(USBD_HandleTypeDef *pdev,
                                   uint16_t ep_mps)
 {
   PCD_HandleTypeDef *hpcd = pdev->pData;
-  HAL_StatusTypeDef  ret = HAL_OK;
+  USBD_StatusTypeDef  ret = USBD_OK;
   PCD_EPTypeDef *ep;
 
   // FACT: this turns on EP1
@@ -859,7 +871,7 @@ USBD_StatusTypeDef USBD_LL_CloseEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   __HAL_LOCK(hpcd);
   (void)USB_DeactivateEndpoint(hpcd->Instance, ep);
   __HAL_UNLOCK(hpcd);
-  return HAL_OK;
+  return USBD_OK;
 }
 
 
@@ -897,7 +909,7 @@ USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev,
     (void)USB_EPStartXfer(hpcd->Instance, ep);
   }
 
-  return HAL_OK;
+  return USBD_OK;
 }
 
 /**
@@ -921,7 +933,7 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev,
   ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
 
   if(ep->num == 1)
-  	return HAL_OK;
+    return USBD_OK;
 
   /*setup and start the Xfer */
   ep->xfer_buff = pBuf;
@@ -939,7 +951,7 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev,
     (void)USB_EPStartXfer(hpcd->Instance, ep);
   }
 
-  return HAL_OK;
+  return USBD_OK;
 }
 
 /**
@@ -955,14 +967,14 @@ USBD_StatusTypeDef USBD_LL_StallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 
   if (((uint32_t)ep_addr & EP_ADDR_MSK) > hpcd->Init.dev_endpoints)
   {
-    return HAL_ERROR;
+    return USBD_FAIL;
   }
 
   if ((0x80U & ep_addr) == 0x80U)
   {
     ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
     if(ep->num == 1)
-    	return HAL_OK;
+      return USBD_OK;
     ep->is_in = 1U;
   }
   else
@@ -983,7 +995,7 @@ USBD_StatusTypeDef USBD_LL_StallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   }
   __HAL_UNLOCK(hpcd);
 
-  return HAL_OK;
+  return USBD_OK;
 }
 
 /**
@@ -999,14 +1011,14 @@ USBD_StatusTypeDef USBD_LL_ClearStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_add
 
   if (((uint32_t)ep_addr & 0x0FU) > hpcd->Init.dev_endpoints)
   {
-    return HAL_ERROR;
+    return USBD_FAIL;
   }
 
   if ((0x80U & ep_addr) == 0x80U)
   {
     ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
     if(ep->num == 1)
-    	return HAL_OK;
+      return USBD_OK;
     ep->is_in = 1U;
   }
   else
@@ -1022,7 +1034,7 @@ USBD_StatusTypeDef USBD_LL_ClearStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_add
   (void)USB_EPClearStall(hpcd->Instance, ep);
   __HAL_UNLOCK(hpcd);
 
-  return HAL_OK;
+  return USBD_OK;
 }
 
 
@@ -1099,7 +1111,7 @@ uint8_t USBD_LL_IsStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   {
     ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
     if(ep->num == 1)
-    	return HAL_OK;
+      return HAL_OK;
   }
   else
   {
@@ -1148,7 +1160,7 @@ HAL_StatusTypeDef HAL_PCD_SetTestMode(PCD_HandleTypeDef *hpcd, uint8_t testmode)
 USBD_StatusTypeDef USBD_LL_SetTestMode(USBD_HandleTypeDef *pdev, uint8_t testmode)
 {
 
-  return HAL_PCD_SetTestMode(pdev->pData, testmode);
+  return USBD_Get_USB_Status(HAL_PCD_SetTestMode(pdev->pData, testmode));
 }
 
 USBD_StatusTypeDef USBD_RunTestMode(USBD_HandleTypeDef  *pdev)
