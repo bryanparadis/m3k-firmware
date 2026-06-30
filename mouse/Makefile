@@ -16,8 +16,7 @@ INCLUDE = -I$(CMSIS) -I$(CMSIS_F7)/Include -IInc -IInc/HAL_USB
 LDFLAGS = -TSTM32F730I8KX_FLASH.ld -Wl,--gc-sections,--no-warn-rwx-segments --specs=nano.specs
 LDFLAGS += -Wl,--print-memory-usage
 
-STARTUP = \
-	$(CMSIS_F7)/Source/Templates/system_stm32f7xx.c
+STARTUP = Startup/startup_stm32f730i8kx.s
 
 SOURCES = \
 	Src/main.c \
@@ -34,11 +33,9 @@ SOURCES = \
 
 m2k: TARGET := m2k
 m2k: DEFINES += -DBOARD_M2K -DSTM32F730xx
-m2k: STARTUP +=	$(CMSIS_F7)/Source/Templates/gcc/startup_stm32f730xx.s 
 m2k: m2k.output
 m3k: TARGET := m3k
 m3k: DEFINES += -DBOARD_M3K -DSTM32F723xx
-m3k: STARTUP +=	$(CMSIS_F7)/Source/Templates/gcc/startup_stm32f723xx.s 
 m3k: m3k.output
 all: m2k m3k
 
