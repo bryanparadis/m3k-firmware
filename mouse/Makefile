@@ -14,6 +14,7 @@ CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing -fno-builtin 
 INCLUDE = -I$(CMSIS) -I$(CMSIS_F7)/Include -IInc -IInc/HAL_USB
 
 LDFLAGS = -TSTM32F730I8KX_FLASH.ld -Wl,--gc-sections,--no-warn-rwx-segments --specs=nano.specs
+LDFLAGS += -Wl,--print-memory-usage
 
 STARTUP = \
 	$(CMSIS_F7)/Source/Templates/system_stm32f7xx.c
