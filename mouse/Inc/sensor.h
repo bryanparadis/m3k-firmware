@@ -29,6 +29,17 @@
 #include "stm32f7xx.h"
 #include "config.h"
 
+typedef enum {
+    SPI_BAUD_DIV2   = 0b000,
+    SPI_BAUD_DIV4   = 0b001,
+    SPI_BAUD_DIV8   = 0b010,
+    SPI_BAUD_DIV16  = 0b011,
+    SPI_BAUD_DIV32  = 0b100,
+    SPI_BAUD_DIV64  = 0b101,
+    SPI_BAUD_DIV128 = 0b110,
+    SPI_BAUD_DIV256 = 0b111,
+} spi_baud_div_t;
+#define SPI_BR(div)   ((div) << SPI_CR1_BR_Pos)
 
 #ifdef BOARD_M2K
 	#include "srom_3360_0x05.h"
@@ -76,7 +87,7 @@
 		// SPI config
 		SPIx_CLK_ENABLE();
 		SPIx->CR1 = SPI_CR1_SSM | SPI_CR1_SSI // software SS
-				| (0b011 << SPI_CR1_BR_Pos) // assumes PCLK2 = 32MHz. divide by 16 for 2MHz
+				| SPI_BR(SPI_BAUD_DIV32) // 128 (SYSCLK) / 2 (APB2 DIV) = 64 / 32 (SPI_BAUD_DIV) = 2 MHz
 				| SPI_CR1_MSTR // master
 				| SPI_CR1_CPOL // CPOL = 1
 				| SPI_CR1_CPHA; // CPHA = 1
@@ -276,11 +287,9 @@
 				0b11 << (2*SPIx_SS_PIN_Pos),
 				0b01 << (2*SPIx_SS_PIN_Pos));
 
-		// SPI config
 		SPIx_CLK_ENABLE();
-		// CLOCK
 		SPIx->CR1 = SPI_CR1_SSM | SPI_CR1_SSI // software SS
-				| (0b001 << SPI_CR1_BR_Pos) // assumes PCLK2 = 32MHz. divide by 4 for 8MHz
+				| SPI_BR(SPI_BAUD_DIV4) //  160 (SYSCLK) / 4 (APB1 DIV) = 40 / 4 (SPI_BAUD_DIV) = 10 MHz
 				| SPI_CR1_MSTR // master
 				| SPI_CR1_CPOL // CPOL = 1
 				| SPI_CR1_CPHA; // CPHA = 1
