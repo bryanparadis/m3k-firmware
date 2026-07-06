@@ -318,6 +318,12 @@ int main(void) {
 
 	usb_wait_configured();
 
+	// Use to check TIMCLK2/delay_us. Should be delay_us(X+5)
+	// while (1) {
+	// spi_send(0x1);
+	// delay_us(15);
+	//}
+
 	while (1) {
 		if (update_cfg) {
 			update_cfg = 0;
@@ -372,22 +378,22 @@ int main(void) {
 			continue;
 		sync = 0;
 
-		// TODO optimize and then adjust HS delay. Don't know possibly max loop length.
-		//75us ok  1 poll
-		//77us ok  1 poll
-		//78us bad 2 polls
-		//104us at 160MHz
+		// M2K
+		// 48 us max
+		// M3K
+		// 106 us max
+		// Give 2 us tolerance
 #ifdef BOARD_M2K
 		if (hs_usb) {
-			delay_us(20);
+			delay_us(46);
 		} else {
-			delay_us(895);
+			delay_us(921);
 		}
 #elif  BOARD_M3K
 		if (hs_usb) {
-			delay_us(60);
+			delay_us(104);
 		} else {
-			delay_us(935);
+			delay_us(979);
 		}
 #endif
 
