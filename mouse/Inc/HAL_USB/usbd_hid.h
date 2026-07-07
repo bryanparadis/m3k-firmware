@@ -89,7 +89,7 @@ typedef struct
   uint32_t IdleState;
   uint32_t AltSetting;
   HID_StateTypeDef state;
-  uint8_t set_report_buffer[32]; // Temporary buffer for Set_Report data
+  uint8_t set_report_buffer[64]; // Temporary buffer for Set_Report data
 } USBD_HID_HandleTypeDef;
 /**
   * @}

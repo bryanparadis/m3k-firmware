@@ -237,7 +237,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
     0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
     0x26, 0xff, 0x00,              //   LOGICAL_MAXIMUM (255)
     0x75, 0x08,                    //   REPORT_SIZE (8)
-    0x95, 0x40,                    //   REPORT_COUNT (64)
+    0x95, 0x3F,                    //   REPORT_COUNT (63) // id + 63 = 64
     0xb1, 0x02,                    //   FEATURE (Data,Var,Abs)
 	0x85, 0x03,                    //   REPORT_ID (3) Get and set config
 	0x09, 0x02,                    //   USAGE (Vendor Usage 2) - Custom usage ID for config data (0x02)
@@ -344,11 +344,11 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
     switch (req->bRequest)
     {
     case HID_REQ_SET_REPORT:
-        if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
+        if ((req->wValue >> 8) == 0x03 && ((req->wValue & 0xFF) == 0x02 || (req->wValue & 0xFF) == 0x03))
         {
         	hhid->state = HID_SET_REPORT_PENDING;
 
-            USBD_CtlPrepareRx(pdev, hhid->set_report_buffer, 5);
+            USBD_CtlPrepareRx(pdev, hhid->set_report_buffer, 64);
         } else {
           USBD_CtlError(pdev, req);
           ret = USBD_FAIL;
@@ -358,14 +358,14 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
     case HID_REQ_GET_REPORT:
     	if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x02)
 		{
-		    uint8_t report_buffer[65];
+		    uint8_t report_buffer[64];
 			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
 
 			report_buffer[0] = 0x02U;
 			memcpy(&report_buffer[1], FW_VERSION, sizeof(FW_VERSION)); // Copy including null terminator
 
 			// Send Report ID + 64 bytes of firmware version
-			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 65);
+			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 64);
 		}
 		else if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
 		{
@@ -556,16 +556,23 @@ uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
 
     if (hhid->state == HID_SET_REPORT_PENDING)
     {
-        // Data has been received into hhid->set_report_buffer
-        // Copy to feature_report.words (32 x 16-bit)
-        for (uint8_t i = 1; i < 5; i++)
-        {
-        	// extern from main.h
-        	cfg_bytes[i - 1] = hhid->set_report_buffer[i];
-        }
+		if (hhid->set_report_buffer[0] == 2)
+		{
+			// NOP
+		}
+		else if (hhid->set_report_buffer[0] == 3)
+		{
+			// Data has been received into hhid->set_report_buffer
+			// Copy to feature_report.words (32 x 16-bit)
+			for (uint8_t i = 1; i < 5; i++)
+			{
+				// extern from main.h
+				cfg_bytes[i - 1] = hhid->set_report_buffer[i];
+			}
 
-        // Tell main loop to update cfg
-        update_cfg = 1;
+			// Tell main loop to update cfg
+			update_cfg = 1;
+		}
 
         hhid->state = HID_IDLE;
     }
