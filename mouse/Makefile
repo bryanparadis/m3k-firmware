@@ -7,7 +7,13 @@ CC      := arm-none-eabi-gcc
 OBJCOPY := arm-none-eabi-objcopy
 SIZE    := arm-none-eabi-size
 
-CFLAGS  = -Os -std=gnu17 -Wall -Wextra
+ifeq ($(build), debug)
+  CFLAGS := -Og -g3
+else
+  CFLAGS := -Os
+endif
+
+CFLAGS += -std=gnu17 -Wall -Wextra
 CFLAGS += -mcpu=cortex-m7 -mthumb -mabi=aapcs
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing -fno-builtin -fshort-enums
 
