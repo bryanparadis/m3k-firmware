@@ -54,7 +54,7 @@
 #define CONFIG_DPI_Msk          (0x1FF << CONFIG_DPI_Pos)
 #define CONFIG_DPI              CONFIG_DPI_Msk
 
-typedef uint16_t Config;
+typedef uint64_t Config;
 
 extern const Config config_default;
 
