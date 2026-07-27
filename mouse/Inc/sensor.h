@@ -231,6 +231,14 @@ typedef enum {
 		ss_high();
 	}
 
+	static void sensor_set_at(const int8_t angle_tune)
+	{
+		ss_low();
+		spi_write(0x11, angle_tune);
+		spi_write(0x50, 0x00); // return to burst mode
+		ss_high();
+	}
+
 	static void sensor_set_lod(const uint8_t lod)
 	{
 		ss_low();
@@ -489,6 +497,18 @@ typedef enum {
 	{
 		ss_low();
 		spi_write(0x56, (angle_snap << 7) | 0x0D);
+		ss_high();
+	}
+
+	static void sensor_set_at(const int8_t angle_tune)
+	{
+		ss_low();
+		spi_write(0x7F, 0x05);
+		spi_write(0x77, angle_tune);
+        if (angle_tune != 0) {
+            spi_write(0x78, 1 << 7);
+        }
+		spi_write(0x7F, 0x00);
 		ss_high();
 	}
 
