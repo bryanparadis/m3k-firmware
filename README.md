@@ -32,7 +32,7 @@ cd m3k-firmware
 git submodule update --init --recursive
 ```
 ## Building
-You can target just m2k or m3k via `make <target>`. By default it will build both.
+You can target just m2k or m3k via `make <target>`. By default it will build both. You can add `build=debug` if you want debugging symbols.
 
 ## Bootloader
 ```bash
