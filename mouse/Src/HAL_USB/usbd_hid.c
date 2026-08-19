@@ -191,47 +191,47 @@ __ALIGN_BEGIN static uint8_t USBD_HID_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
 };
 
 __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __ALIGN_END = {
-	// Mouse Collection (Input Report with Report ID 1)
-	0x05, 0x01,                    // USAGE_PAGE (Generic Desktop) - Context set to Generic Desktop controls (0x01)
-	0x09, 0x02,                    // USAGE (Mouse) - This collection represents a Mouse device (0x02)
-	0xA1, 0x01,                    // COLLECTION (Application) - Starts an Application collection for mouse input
-	0x85, 0x01,                    //   REPORT_ID (1) - Assigns Report ID 1 to this input report (0x01)
-	0x05, 0x09,                    //   USAGE_PAGE (Button) - Switches context to Button controls (0x09)
-	0x19, 0x01,                    //   USAGE_MINIMUM (Button 1) - Defines the first button (0x01)
-	0x29, 0x05,                    //   USAGE_MAXIMUM (Button 5) - Defines the fifth button (0x05), total 5 buttons
-	0x15, 0x00,                    //   LOGICAL_MINIMUM (0) - Button state: 0 = released
-	0x25, 0x01,                    //   LOGICAL_MAXIMUM (1) - Button state: 1 = pressed
-	0x95, 0x05,                    //   REPORT_COUNT (5) - 5 button fields
-	0x75, 0x01,                    //   REPORT_SIZE (1) - Each button is 1 bit
-	0x81, 0x02,                    //   INPUT (Data,Var,Abs) - 5 bits of variable, absolute button data
-	0x95, 0x01,                    //   REPORT_COUNT (1) - 1 padding field
-	0x75, 0x03,                    //   REPORT_SIZE (3) - 3 bits of padding to align to 1 byte
-	0x81, 0x03,                    //   INPUT (Cnst,Var,Abs) - 3 constant bits (padding, typically 0)
-	0x05, 0x01,                    //   USAGE_PAGE (Generic Desktop) - Returns context to Generic Desktop
-	0x09, 0x38,                    //   USAGE (Wheel) - Wheel control (0x38)
-	0x15, 0x81,                    //   LOGICAL_MINIMUM (-127) - Wheel range: -127 (scroll down)
-	0x25, 0x7F,                    //   LOGICAL_MAXIMUM (127) - to 127 (scroll up)
-	0x35, 0x81,                    //   PHYSICAL_MINIMUM (-127) - Physical range matches logical (optional)
-	0x45, 0x7F,                    //   PHYSICAL_MAXIMUM (127) - Physical range endpoint (optional)
-	0x75, 0x08,                    //   REPORT_SIZE (8) - Wheel data is 8 bits
-	0x95, 0x01,                    //   REPORT_COUNT (1) - 1 wheel field
-	0x81, 0x06,                    //   INPUT (Data,Var,Rel) - 1 byte of variable, relative wheel data
-	0x09, 0x30,                    //   USAGE (X) - X-axis coordinate (0x30)
-	0x09, 0x31,                    //   USAGE (Y) - Y-axis coordinate (0x31)
-	0x16, 0x01, 0x80,              //   LOGICAL_MINIMUM (-32767) - X/Y range: -32767 (2-byte signed)
-	0x26, 0xFF, 0x7F,              //   LOGICAL_MAXIMUM (32767) - to 32767
-	0x36, 0x01, 0x80,              //   PHYSICAL_MINIMUM (-32767) - Physical range start (optional)
-	0x46, 0xFF, 0x7F,              //   PHYSICAL_MAXIMUM (32767) - Physical range end (optional)
-	0x75, 0x10,                    //   REPORT_SIZE (16) - Each coordinate is 16 bits
-	0x95, 0x02,                    //   REPORT_COUNT (2) - 2 fields (X and Y)
-	0x81, 0x06,                    //   INPUT (Data,Var,Rel) - 4 bytes of variable, relative X/Y data
-	0xC0,                          // END_COLLECTION - Closes the mouse Application collection
-	// 71 Bytes
+    // Mouse Collection (Input Report with Report ID 1)
+    0x05, 0x01,                    // USAGE_PAGE (Generic Desktop) - Context set to Generic Desktop controls (0x01)
+    0x09, 0x02,                    // USAGE (Mouse) - This collection represents a Mouse device (0x02)
+    0xA1, 0x01,                    // COLLECTION (Application) - Starts an Application collection for mouse input
+    0x85, 0x01,                    //   REPORT_ID (1) - Assigns Report ID 1 to this input report (0x01)
+    0x05, 0x09,                    //   USAGE_PAGE (Button) - Switches context to Button controls (0x09)
+    0x19, 0x01,                    //   USAGE_MINIMUM (Button 1) - Defines the first button (0x01)
+    0x29, 0x05,                    //   USAGE_MAXIMUM (Button 5) - Defines the fifth button (0x05), total 5 buttons
+    0x15, 0x00,                    //   LOGICAL_MINIMUM (0) - Button state: 0 = released
+    0x25, 0x01,                    //   LOGICAL_MAXIMUM (1) - Button state: 1 = pressed
+    0x95, 0x05,                    //   REPORT_COUNT (5) - 5 button fields
+    0x75, 0x01,                    //   REPORT_SIZE (1) - Each button is 1 bit
+    0x81, 0x02,                    //   INPUT (Data,Var,Abs) - 5 bits of variable, absolute button data
+    0x95, 0x01,                    //   REPORT_COUNT (1) - 1 padding field
+    0x75, 0x03,                    //   REPORT_SIZE (3) - 3 bits of padding to align to 1 byte
+    0x81, 0x03,                    //   INPUT (Cnst,Var,Abs) - 3 constant bits (padding, typically 0)
+    0x05, 0x01,                    //   USAGE_PAGE (Generic Desktop) - Returns context to Generic Desktop
+    0x09, 0x38,                    //   USAGE (Wheel) - Wheel control (0x38)
+    0x15, 0x81,                    //   LOGICAL_MINIMUM (-127) - Wheel range: -127 (scroll down)
+    0x25, 0x7F,                    //   LOGICAL_MAXIMUM (127) - to 127 (scroll up)
+    0x35, 0x81,                    //   PHYSICAL_MINIMUM (-127) - Physical range matches logical (optional)
+    0x45, 0x7F,                    //   PHYSICAL_MAXIMUM (127) - Physical range endpoint (optional)
+    0x75, 0x08,                    //   REPORT_SIZE (8) - Wheel data is 8 bits
+    0x95, 0x01,                    //   REPORT_COUNT (1) - 1 wheel field
+    0x81, 0x06,                    //   INPUT (Data,Var,Rel) - 1 byte of variable, relative wheel data
+    0x09, 0x30,                    //   USAGE (X) - X-axis coordinate (0x30)
+    0x09, 0x31,                    //   USAGE (Y) - Y-axis coordinate (0x31)
+    0x16, 0x01, 0x80,              //   LOGICAL_MINIMUM (-32767) - X/Y range: -32767 (2-byte signed)
+    0x26, 0xFF, 0x7F,              //   LOGICAL_MAXIMUM (32767) - to 32767
+    0x36, 0x01, 0x80,              //   PHYSICAL_MINIMUM (-32767) - Physical range start (optional)
+    0x46, 0xFF, 0x7F,              //   PHYSICAL_MAXIMUM (32767) - Physical range end (optional)
+    0x75, 0x10,                    //   REPORT_SIZE (16) - Each coordinate is 16 bits
+    0x95, 0x02,                    //   REPORT_COUNT (2) - 2 fields (X and Y)
+    0x81, 0x06,                    //   INPUT (Data,Var,Rel) - 4 bytes of variable, relative X/Y data
+    0xC0,                          // END_COLLECTION - Closes the mouse Application collection
+    // 71 Bytes
 
-	// Vendor-Defined Collection (Feature Report with Report ID 2)
-	0x06, 0x00, 0xFF,              // USAGE_PAGE (Vendor-Defined 1) - Vendor-defined context (0xFF00)
-	0x09, 0x01,                    // USAGE (Vendor Usage 1) - Custom usage ID for this collection (0x01)
-	0xA1, 0x01,                    // COLLECTION (Application) - Starts an Application collection for config
+    // Vendor-Defined Collection (Feature Report with Report ID 2)
+    0x06, 0x00, 0xFF,              // USAGE_PAGE (Vendor-Defined 1) - Vendor-defined context (0xFF00)
+    0x09, 0x01,                    // USAGE (Vendor Usage 1) - Custom usage ID for this collection (0x01)
+    0xA1, 0x01,                    // COLLECTION (Application) - Starts an Application collection for config
     0x85, 0x02,                    //   REPORT_ID (2) Get version
     0x09, 0x01,                    //   USAGE (Vendor Usage 1)
     0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
@@ -239,15 +239,15 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
     0x75, 0x08,                    //   REPORT_SIZE (8)
     0x95, 0x3F,                    //   REPORT_COUNT (63) // id + 63 = 64
     0xb1, 0x02,                    //   FEATURE (Data,Var,Abs)
-	0x85, 0x03,                    //   REPORT_ID (3) Get and set config
-	0x09, 0x02,                    //   USAGE (Vendor Usage 2) - Custom usage ID for config data (0x02)
-	0x15, 0x00,                    //   LOGICAL_MINIMUM (0) - Config values start at 0
-	0x27, 0xFF, 0xFF, 0x00, 0x00,  //   LOGICAL_MAXIMUM (65535) - Config values up to 65535 (16-bit unsigned)
-	0x75, 0x10,                    //   REPORT_SIZE (16) - Each config field is 16 bits
-	0x95, 0x02,                    //   REPORT_COUNT (2)
-	0xB1, 0x02,                    //   FEATURE (Data,Var,Abs) - 64 bytes of variable, absolute config data
-	0xC0                           // END_COLLECTION - Closes the vendor-defined Application collection
-	// 40 Bytes
+    0x85, 0x03,                    //   REPORT_ID (3) Get and set config
+    0x09, 0x02,                    //   USAGE (Vendor Usage 2) - Custom usage ID for config data (0x02)
+    0x15, 0x00,                    //   LOGICAL_MINIMUM (0) - Config values start at 0
+    0x27, 0xFF, 0xFF, 0x00, 0x00,  //   LOGICAL_MAXIMUM (65535) - Config values up to 65535 (16-bit unsigned)
+    0x75, 0x10,                    //   REPORT_SIZE (16) - Each config field is 16 bits
+    0x95, 0x02,                    //   REPORT_COUNT (2)
+    0xB1, 0x02,                    //   FEATURE (Data,Var,Abs) - 64 bytes of variable, absolute config data
+    0xC0                           // END_COLLECTION - Closes the vendor-defined Application collection
+    // 40 Bytes
 };
 
 /** @defgroup USBD_HID_Private_Functions
@@ -346,7 +346,7 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
     case HID_REQ_SET_REPORT:
         if ((req->wValue >> 8) == 0x03 && ((req->wValue & 0xFF) == 0x02 || (req->wValue & 0xFF) == 0x03))
         {
-        	hhid->state = HID_SET_REPORT_PENDING;
+            hhid->state = HID_SET_REPORT_PENDING;
 
             USBD_CtlPrepareRx(pdev, hhid->set_report_buffer, 64);
         } else {
@@ -356,41 +356,41 @@ uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
         break;
 
     case HID_REQ_GET_REPORT:
-    	if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x02)
-		{
-		    uint8_t report_buffer[64];
-			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
+        if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x02)
+        {
+            uint8_t report_buffer[64];
+            memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
 
-			report_buffer[0] = 0x02U;
-			memcpy(&report_buffer[1], FW_VERSION, sizeof(FW_VERSION)); // Copy including null terminator
+            report_buffer[0] = 0x02U;
+            memcpy(&report_buffer[1], FW_VERSION, sizeof(FW_VERSION)); // Copy including null terminator
 
-			// Send Report ID + 64 bytes of firmware version
-			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 64);
-		}
-		else if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
-		{
-			uint8_t report_buffer[5];
-			memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
+            // Send Report ID + 64 bytes of firmware version
+            USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 64);
+        }
+        else if ((req->wValue >> 8) == 0x03 && (req->wValue & 0xFF) == 0x03)
+        {
+            uint8_t report_buffer[5];
+            memset(report_buffer, 0, sizeof(report_buffer)); // Zero all bytes
 
-			report_buffer[0] = 0x03U;
+            report_buffer[0] = 0x03U;
 
-			// Read config
-			Config cfg = config_read();
-			uint8_t cfg_bytes[2];
-			cfg_bytes[0] = cfg & 0xFF;        // Low byte
-			cfg_bytes[1] = (cfg >> 8) & 0xFF; // High byte
+            // Read config
+            Config cfg = config_read();
+            uint8_t cfg_bytes[2];
+            cfg_bytes[0] = cfg & 0xFF;        // Low byte
+            cfg_bytes[1] = (cfg >> 8) & 0xFF; // High byte
 
-			for(uint8_t i = 0; i < 2; i++) {
-				report_buffer[i+1] = cfg_bytes[i];
-			}
+            for(uint8_t i = 0; i < 2; i++) {
+                report_buffer[i+1] = cfg_bytes[i];
+            }
 
-			// Send Report ID + 32 bytes of config
-			USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 5);
-		} else {
-	      USBD_CtlError(pdev, req);
-	      ret = USBD_FAIL;
-	    }
-		break;
+            // Send Report ID + 32 bytes of config
+            USBD_CtlSendData(pdev,  (uint8_t *)report_buffer, 5);
+        } else {
+          USBD_CtlError(pdev, req);
+          ret = USBD_FAIL;
+        }
+        break;
 
     case HID_REQ_SET_PROTOCOL:
       hhid->Protocol = (uint8_t)(req->wValue);
@@ -556,23 +556,23 @@ uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
 
     if (hhid->state == HID_SET_REPORT_PENDING)
     {
-		if (hhid->set_report_buffer[0] == 2)
-		{
-			// NOP
-		}
-		else if (hhid->set_report_buffer[0] == 3)
-		{
-			// Data has been received into hhid->set_report_buffer
-			// Copy to feature_report.words (32 x 16-bit)
-			for (uint8_t i = 1; i < 5; i++)
-			{
-				// extern from main.h
-				cfg_bytes[i - 1] = hhid->set_report_buffer[i];
-			}
+        if (hhid->set_report_buffer[0] == 2)
+        {
+            // NOP
+        }
+        else if (hhid->set_report_buffer[0] == 3)
+        {
+            // Data has been received into hhid->set_report_buffer
+            // Copy to feature_report.words (32 x 16-bit)
+            for (uint8_t i = 1; i < 5; i++)
+            {
+                // extern from main.h
+                cfg_bytes[i - 1] = hhid->set_report_buffer[i];
+            }
 
-			// Tell main loop to update cfg
-			update_cfg = 1;
-		}
+            // Tell main loop to update cfg
+            update_cfg = 1;
+        }
 
         hhid->state = HID_IDLE;
     }

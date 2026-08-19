@@ -26,14 +26,14 @@
 #include <stdbool.h>
 
 struct Xy {
-	int16_t x, y;
+    int16_t x, y;
 };
 
 // move in xy direction for len cycles
 // remember that positive y is downwards
 struct Anim {
-	uint32_t len;
-	struct Xy xy;
+    uint32_t len;
+    struct Xy xy;
 };
 
 void anim_set_scale(int scale);

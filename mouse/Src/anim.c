@@ -31,17 +31,17 @@ static int anim_time_scale = 1; // slow down animation by this factor
 
 void anim_set_scale(int scale)
 {
-	anim_time_scale = scale;
+    anim_time_scale = scale;
 }
 
 void anim_add(int reps, int len_seq, const struct Anim seq[])
 {
-	for (int i = 0; i < reps; i++) {
-		for (int j = 0; j < len_seq; j++) {
-			buf[anim_buf_tail] = seq[j];
-			anim_buf_tail = (anim_buf_tail + 1) % BUF_SIZE;
-		}
-	}
+    for (int i = 0; i < reps; i++) {
+        for (int j = 0; j < len_seq; j++) {
+            buf[anim_buf_tail] = seq[j];
+            anim_buf_tail = (anim_buf_tail + 1) % BUF_SIZE;
+        }
+    }
 }
 
 
@@ -54,62 +54,62 @@ void anim_add(int reps, int len_seq, const struct Anim seq[])
 
 void anim_num(const uint16_t x)
 {
-	const struct Anim *symbols[] = {
-		(struct Anim[]){D_SEG, D_SEG, R_SEG, U_SEG, U_SEG, L_SEG, ANIM(1, HSPACE, 0)}, // 0
-		(struct Anim[]){D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 1
-		(struct Anim[]){R_SEG, D_SEG, L_SEG, D_SEG, R_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 2
-		(struct Anim[]){R_SEG, D_SEG, L_SEG, R_SEG, D_SEG, L_SEG, ANIM(1, HSPACE, -LEN_SEG*2)}, // 3
-		(struct Anim[]){D_SEG, R_SEG, U_SEG, D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 4
-		(struct Anim[]){L_SEG, D_SEG, R_SEG, D_SEG, L_SEG, ANIM(1, HSPACE, -LEN_SEG*2)}, //5
-		(struct Anim[]){L_SEG, D_SEG, D_SEG, R_SEG, U_SEG, L_SEG, ANIM(1, HSPACE, -LEN_SEG)}, // 6
-		(struct Anim[]){R_SEG, D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 7
-		(struct Anim[]){D_SEG, R_SEG, D_SEG, L_SEG, U_SEG, R_SEG, U_SEG, L_SEG, ANIM(1, HSPACE, 0)}, // 8
-		(struct Anim[]){L_SEG, D_SEG, R_SEG, U_SEG, D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)} // 9
-	};
-	const int lengths[] = {7, 3, 6, 7, 6, 6, 7, 4, 9, 7};
-	const int right[] = {0, 1, 0, 0, 0, 1, 1, 0, 0, 1}; // 1, 5, 6, 9 start from top right.
+    const struct Anim *symbols[] = {
+        (struct Anim[]){D_SEG, D_SEG, R_SEG, U_SEG, U_SEG, L_SEG, ANIM(1, HSPACE, 0)}, // 0
+        (struct Anim[]){D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 1
+        (struct Anim[]){R_SEG, D_SEG, L_SEG, D_SEG, R_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 2
+        (struct Anim[]){R_SEG, D_SEG, L_SEG, R_SEG, D_SEG, L_SEG, ANIM(1, HSPACE, -LEN_SEG*2)}, // 3
+        (struct Anim[]){D_SEG, R_SEG, U_SEG, D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 4
+        (struct Anim[]){L_SEG, D_SEG, R_SEG, D_SEG, L_SEG, ANIM(1, HSPACE, -LEN_SEG*2)}, //5
+        (struct Anim[]){L_SEG, D_SEG, D_SEG, R_SEG, U_SEG, L_SEG, ANIM(1, HSPACE, -LEN_SEG)}, // 6
+        (struct Anim[]){R_SEG, D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)}, // 7
+        (struct Anim[]){D_SEG, R_SEG, D_SEG, L_SEG, U_SEG, R_SEG, U_SEG, L_SEG, ANIM(1, HSPACE, 0)}, // 8
+        (struct Anim[]){L_SEG, D_SEG, R_SEG, U_SEG, D_SEG, D_SEG, ANIM(1, HSPACE - LEN_SEG, -LEN_SEG*2)} // 9
+    };
+    const int lengths[] = {7, 3, 6, 7, 6, 6, 7, 4, 9, 7};
+    const int right[] = {0, 1, 0, 0, 0, 1, 1, 0, 0, 1}; // 1, 5, 6, 9 start from top right.
 
-	const int powers[] = {10000, 1000, 100, 10, 1};
-	const int len_powers = 5;
-	int n = 0; // which number we're on, from left to right
-	for (int i = 0; i < len_powers; i++) {
-		int d = (x / powers[i]) % 10;
-		if (n == 0 && d > 0) n = 1;
-		if (n > 0 || i == len_powers - 1) {
-			if (right[d] && n > 1) // start on right side for 1, 5, 6, 9
-				anim_add(1, 1, (struct Anim[]){ANIM(1, LEN_SEG, 0)});
-			anim_add(1, lengths[d] - 1, symbols[d]); // symbol apart from shift at the end
-			if (i < len_powers - 1) { // except for last digit, pause and then shift
-				anim_pause(300);
-				anim_add(1, 1, symbols[d] + lengths[d] - 1); // including the shift after a pause
-			}
-			n++;
-		}
-	}
+    const int powers[] = {10000, 1000, 100, 10, 1};
+    const int len_powers = 5;
+    int n = 0; // which number we're on, from left to right
+    for (int i = 0; i < len_powers; i++) {
+        int d = (x / powers[i]) % 10;
+        if (n == 0 && d > 0) n = 1;
+        if (n > 0 || i == len_powers - 1) {
+            if (right[d] && n > 1) // start on right side for 1, 5, 6, 9
+                anim_add(1, 1, (struct Anim[]){ANIM(1, LEN_SEG, 0)});
+            anim_add(1, lengths[d] - 1, symbols[d]); // symbol apart from shift at the end
+            if (i < len_powers - 1) { // except for last digit, pause and then shift
+                anim_pause(300);
+                anim_add(1, 1, symbols[d] + lengths[d] - 1); // including the shift after a pause
+            }
+            n++;
+        }
+    }
 }
 
 struct Xy anim_read(void)
 {
-	if (anim_buf_head == anim_buf_tail)
-		return (struct Xy){0};
+    if (anim_buf_head == anim_buf_tail)
+        return (struct Xy){0};
 
-	static int count = 0;
-	count = (count + 1) % anim_time_scale;
-	if (count > 0)
-		return (struct Xy){0};
+    static int count = 0;
+    count = (count + 1) % anim_time_scale;
+    if (count > 0)
+        return (struct Xy){0};
 
-	// step through animation only after anim_time_scale calls to anim_read()
-	struct Xy ret = buf[anim_buf_head].xy;
-	buf[anim_buf_head].len--;
-	if (buf[anim_buf_head].len == 0)
-		anim_buf_head = (anim_buf_head + 1) % BUF_SIZE;
-	return ret;
+    // step through animation only after anim_time_scale calls to anim_read()
+    struct Xy ret = buf[anim_buf_head].xy;
+    buf[anim_buf_head].len--;
+    if (buf[anim_buf_head].len == 0)
+        anim_buf_head = (anim_buf_head + 1) % BUF_SIZE;
+    return ret;
 }
 
 bool anim_running(void)
 {
-	if(anim_buf_head == anim_buf_tail)
-		return false;
-	else
-		return true;
+    if(anim_buf_head == anim_buf_tail)
+        return false;
+    else
+        return true;
 }

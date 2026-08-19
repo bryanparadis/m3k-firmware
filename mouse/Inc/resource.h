@@ -39,7 +39,7 @@ static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal t
 #define SPIx_SCK_GPIO_CLK_ENABLE()       do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;} while(0)
 #define SPIx_MISO_GPIO_CLK_ENABLE()      do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;} while(0)
 #define SPIx_MOSI_GPIO_CLK_ENABLE()      do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;} while(0)
-#define SPIx_SS_GPIO_CLK_ENABLE()	     do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;} while(0)
+#define SPIx_SS_GPIO_CLK_ENABLE()        do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;} while(0)
 
 // SPI
 #define SPIx_SCK_GPIO_PORT  GPIOC

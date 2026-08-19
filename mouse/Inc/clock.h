@@ -33,7 +33,7 @@ STM32F722ic/STM32F730r8 Datasheets: Table 16. General operating conditions
   0 - 180 MHz power scale 1 PWR CR1_VOS = 0b11, overdrive off
 181 - 216 MHz power scale 1 PWR CR1_VOS = 0b11, overdrive  on
 
-RM0431: Table 5. Number of wait states according to CPU clock (HCLK frequency) 
+RM0431: Table 5. Number of wait states according to CPU clock (HCLK frequency)
 VDD 2.7 V - 3.6 V
   0 -  30 MHz = 0 WS (1 CPU cycles)
  31 -  60 MHz = 1 WS (2 CPU cycles)
