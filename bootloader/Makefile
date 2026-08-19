@@ -19,7 +19,7 @@ LDFLAGS = -TSTM32F730I8KX_FLASH.ld -Wl,--gc-sections,--no-warn-rwx-segments --sp
 LDFLAGS += -Wl,--print-memory-usage
 
 SOURCES = $(wildcard Src/*.c) \
-		  $(wildcard Src/HAL/*.c)
+          $(wildcard Src/HAL/*.c)
 
 STARTUP = Startup/startup_stm32f730i8kx.s
 
