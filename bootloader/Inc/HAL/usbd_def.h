@@ -70,9 +70,9 @@ extern "C" {
 #endif /* USBD_CLASS_USER_STRING_DESC */
 
 #define  USB_LEN_DEV_QUALIFIER_DESC                     0x0AU
-#define  USB_SIZ_MSOS1_STR_DESC							0x12U
-#define  USB_SIZ_BOS_DESC								0x21U
-#define  USB_SIZ_MSOS2_DESC								0x1EU
+#define  USB_SIZ_MSOS1_STR_DESC                         0x12U
+#define  USB_SIZ_BOS_DESC                               0x21U
+#define  USB_SIZ_MSOS2_DESC                             0x1EU
 #define  USB_LEN_DEV_DESC                               0x12U
 #define  USB_LEN_CFG_DESC                               0x09U
 #define  USB_LEN_IF_DESC                                0x09U
@@ -87,7 +87,7 @@ extern "C" {
 #define  USBD_IDX_SERIAL_STR                            0x03U
 #define  USBD_IDX_CONFIG_STR                            0x04U
 #define  USBD_IDX_INTERFACE_STR                         0x05U
-#define  USB_IDX_MSOS1_STR								0xEEU
+#define  USB_IDX_MSOS1_STR                              0xEEU
 
 #define  USB_REQ_TYPE_STANDARD                          0x00U
 #define  USB_REQ_TYPE_CLASS                             0x20U
@@ -121,7 +121,7 @@ extern "C" {
 #define  USB_DESC_TYPE_DEVICE_QUALIFIER                 0x06U
 #define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION        0x07U
 #define  USB_DESC_TYPE_BOS                              0x0FU
-#define  USB_DESC_TYPE_MSOS2							0xEEU
+#define  USB_DESC_TYPE_MSOS2                            0xEEU
 
 #define USB_CONFIG_REMOTE_WAKEUP                        0x02U
 #define USB_CONFIG_SELF_POWERED                         0x01U

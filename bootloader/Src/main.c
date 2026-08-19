@@ -49,7 +49,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define DFU_TIMEOUT 		5 // seconds of holding L+R for DFU mode
+#define DFU_TIMEOUT         5 // seconds of holding L+R for DFU mode
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 USBD_HandleTypeDef USBD_Device;
@@ -69,76 +69,76 @@ static void Error_Handler(void);
  * @retval None
  */
 int main(void) {
-	RMB_NO_CLK_ENABLE();
-	LMB_NO_CLK_ENABLE();
+    RMB_NO_CLK_ENABLE();
+    LMB_NO_CLK_ENABLE();
 
-	// I hate you ST
-	__NOP();
-	__NOP();
+    // I hate you ST
+    __NOP();
+    __NOP();
 
-	// set mousebutton to pullup
-	MODIFY_REG(RMB_NO_PORT->PUPDR, 0b11 << (2*RMB_NO_PIN_Pos),
-			0b01 << (2*RMB_NO_PIN_Pos));
+    // set mousebutton to pullup
+    MODIFY_REG(RMB_NO_PORT->PUPDR, 0b11 << (2*RMB_NO_PIN_Pos),
+            0b01 << (2*RMB_NO_PIN_Pos));
 
-	MODIFY_REG(LMB_NO_PORT->PUPDR, 0b11 << (2*LMB_NO_PIN_Pos),
-			0b01 << (2*LMB_NO_PIN_Pos));
+    MODIFY_REG(LMB_NO_PORT->PUPDR, 0b11 << (2*LMB_NO_PIN_Pos),
+            0b01 << (2*LMB_NO_PIN_Pos));
 
-	// I hate you ST
-	__NOP();
-	__NOP();
+    // I hate you ST
+    __NOP();
+    __NOP();
 
-	// RMB not pressed, or both LMB and RMB are pressed
-	if ((RMB_NO_PORT->IDR & RMB_NO_PIN) != 0
-			|| ((RMB_NO_PORT->IDR & RMB_NO_PIN) == 0
-					&& (LMB_NO_PORT->IDR & LMB_NO_PIN) == 0)) {
-		// jump to app
-		JumpAddress = *(__IO uint32_t*) (USBD_DFU_APP_DEFAULT_ADD + 4);
-		JumpToApplication = (pFunction) JumpAddress;
-		__set_MSP(*(__IO uint32_t*) USBD_DFU_APP_DEFAULT_ADD);
-		JumpToApplication();
-	}
+    // RMB not pressed, or both LMB and RMB are pressed
+    if ((RMB_NO_PORT->IDR & RMB_NO_PIN) != 0
+            || ((RMB_NO_PORT->IDR & RMB_NO_PIN) == 0
+                    && (LMB_NO_PORT->IDR & LMB_NO_PIN) == 0)) {
+        // jump to app
+        JumpAddress = *(__IO uint32_t*) (USBD_DFU_APP_DEFAULT_ADD + 4);
+        JumpToApplication = (pFunction) JumpAddress;
+        __set_MSP(*(__IO uint32_t*) USBD_DFU_APP_DEFAULT_ADD);
+        JumpToApplication();
+    }
 
-	// RMB pressed. continue to DFU mode if held for DFU_TIMEOUT seconds.
-	// default HSI clock is 16MHz. set SysTick to reload every 1ms.
-	SysTick->LOAD = (16000000 / 1000) - 1;
-	SysTick->VAL = 0;
-	SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+    // RMB pressed. continue to DFU mode if held for DFU_TIMEOUT seconds.
+    // default HSI clock is 16MHz. set SysTick to reload every 1ms.
+    SysTick->LOAD = (16000000 / 1000) - 1;
+    SysTick->VAL = 0;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
 
-	for (int i = 0; i < DFU_TIMEOUT * 1000; i++) { // loops every 1ms
-		while ((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == 0) {
-			if ((RMB_NO_PORT->IDR & RMB_NO_PIN) != 0) { // RMB released
-				// keep SysTick enabled. application will know from this that
-				// both LMB and RMB were originally pressed.
-				JumpAddress = *(__IO uint32_t*) (USBD_DFU_APP_DEFAULT_ADD + 4);
+    for (int i = 0; i < DFU_TIMEOUT * 1000; i++) { // loops every 1ms
+        while ((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == 0) {
+            if ((RMB_NO_PORT->IDR & RMB_NO_PIN) != 0) { // RMB released
+                // keep SysTick enabled. application will know from this that
+                // both LMB and RMB were originally pressed.
+                JumpAddress = *(__IO uint32_t*) (USBD_DFU_APP_DEFAULT_ADD + 4);
 
-				JumpToApplication = (pFunction) JumpAddress;
-				__set_MSP(*(__IO uint32_t*) USBD_DFU_APP_DEFAULT_ADD);
-				JumpToApplication();
-			}
-		}
-	}
+                JumpToApplication = (pFunction) JumpAddress;
+                __set_MSP(*(__IO uint32_t*) USBD_DFU_APP_DEFAULT_ADD);
+                JumpToApplication();
+            }
+        }
+    }
 
-	HAL_Init();
+    HAL_Init();
 
-	/* Configure the System clock to have a frequency of 216 MHz */
-	SystemClock_Config();
+    /* Configure the System clock to have a frequency of 216 MHz */
+    SystemClock_Config();
 
-	/* Init Device Library */
-	USBD_Init(&USBD_Device, &DFU_Desc, 0);
+    /* Init Device Library */
+    USBD_Init(&USBD_Device, &DFU_Desc, 0);
 
-	/* Add Supported Class */
-	USBD_RegisterClass(&USBD_Device, USBD_DFU_CLASS);
+    /* Add Supported Class */
+    USBD_RegisterClass(&USBD_Device, USBD_DFU_CLASS);
 
-	/* Add DFU Media interface */
-	USBD_DFU_RegisterMedia(&USBD_Device, &USBD_DFU_Flash_fops);
+    /* Add DFU Media interface */
+    USBD_DFU_RegisterMedia(&USBD_Device, &USBD_DFU_Flash_fops);
 
-	/* Start Device Process */
-	USBD_Start(&USBD_Device);
+    /* Start Device Process */
+    USBD_Start(&USBD_Device);
 
-	/* Run Application (Interrupt mode) */
-	while (1) {
-		__WFI();
-	}
+    /* Run Application (Interrupt mode) */
+    while (1) {
+        __WFI();
+    }
 }
 
 /**
@@ -151,11 +151,11 @@ int main(void) {
  */
 
 void HAL_Delay(__IO uint32_t Delay) {
-	while (Delay) {
-		if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) {
-			Delay--;
-		}
-	}
+    while (Delay) {
+        if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) {
+            Delay--;
+        }
+    }
 }
 
 /**
@@ -179,22 +179,22 @@ void HAL_Delay(__IO uint32_t Delay) {
  * @retval None
  */
 void SystemClock_Config(void) {
-	RCC_ClkInitTypeDef RCC_ClkInitStruct;
-	RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_OscInitTypeDef RCC_OscInitStruct;
 
-	/* Enable HSE Oscillator and activate PLL with HSE as source */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-	RCC_OscInitStruct.HSIState = RCC_HSI_OFF;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLM = 12;
-	RCC_OscInitStruct.PLL.PLLN = 96;
-	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV6;
-	RCC_OscInitStruct.PLL.PLLQ = 4;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-		Error_Handler();
-	}
+    /* Enable HSE Oscillator and activate PLL with HSE as source */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+    RCC_OscInitStruct.HSIState = RCC_HSI_OFF;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLM = 12;
+    RCC_OscInitStruct.PLL.PLLN = 96;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV6;
+    RCC_OscInitStruct.PLL.PLLQ = 4;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        Error_Handler();
+    }
 
 //  /* Activate the OverDrive to reach the 216 Mhz Frequency */
 //  if(HAL_PWREx_EnableOverDrive() != HAL_OK)
@@ -202,17 +202,17 @@ void SystemClock_Config(void) {
 //    Error_Handler();
 //  }
 
-	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
-	 clocks dividers */
-	RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
-			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
-		Error_Handler();
-	}
+    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+     clocks dividers */
+    RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
+            | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
+        Error_Handler();
+    }
 }
 
 /**
@@ -221,9 +221,9 @@ void SystemClock_Config(void) {
  * @retval None
  */
 static void Error_Handler(void) {
-	/* User may add here some code to deal with this error */
-	while (1) {
-	}
+    /* User may add here some code to deal with this error */
+    while (1) {
+    }
 }
 
 /**
@@ -248,7 +248,7 @@ static void Error_Handler(void) {
   * @retval None
   */
 void assert_failed(uint8_t* file, uint32_t line)
-{ 
+{
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 

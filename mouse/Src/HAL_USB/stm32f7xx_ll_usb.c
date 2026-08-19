@@ -571,7 +571,7 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTy
   uint32_t epnum = (uint32_t)ep->num;
 
   //if (epnum ==1)
-	//  return HAL_OK;
+    //  return HAL_OK;
 
   if (ep->is_in == 1U)
   {
@@ -612,7 +612,7 @@ HAL_StatusTypeDef USB_DeactivateEndpoint(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EP
   uint32_t epnum = (uint32_t)ep->num;
 
   if (epnum == 1)
-	  return HAL_OK;
+      return HAL_OK;
 
   /* Read DEPCTLn register */
   if (ep->is_in == 1U)
@@ -667,7 +667,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
   uint16_t pktcnt;
 
   if (epnum ==1)
-	  return HAL_OK;
+      return HAL_OK;
 
 
   /* IN endpoint */
@@ -779,7 +779,7 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
   uint32_t epnum = (uint32_t)ep->num;
 
   if (epnum ==1)
-	  return HAL_OK;
+      return HAL_OK;
 
   /* IN endpoint */
   if (ep->is_in == 1U)
@@ -906,7 +906,7 @@ HAL_StatusTypeDef USB_EPSetStall(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef 
   uint32_t epnum = (uint32_t)ep->num;
 
   if (epnum ==1)
-	  return HAL_OK;
+      return HAL_OK;
 
   if (ep->is_in == 1U)
   {

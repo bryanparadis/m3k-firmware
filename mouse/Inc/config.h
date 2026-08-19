@@ -27,9 +27,9 @@
 #include <stdint.h>
 #include "cmsis_compiler.h"
 // flags bits
-//		|15		  |14		|13		|12		|11		|10		|9		|8 ... 0|
-// 0	|SWAP off |AS off	|FS USB	|	Interval	|      LOD      |DPI	|
-// 1	|SWAP on  |AS on	|HS USB	|	Interval	|      LOD      |DPI	|
+//      |15       |14       |13     |12     |11     |10     |9      |8 ... 0|
+// 0    |SWAP off |AS off   |FS USB |   Interval    |      LOD      |DPI    |
+// 1    |SWAP on  |AS on    |HS USB |   Interval    |      LOD      |DPI    |
 
 // USB report rate:
 //          |FS USB |HS USB |

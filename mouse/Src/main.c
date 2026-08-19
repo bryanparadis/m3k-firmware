@@ -47,438 +47,438 @@ uint8_t count = 0;
 Usb_packet last_packet = {{1,0,0,0,0,0}};
 
 static Config config_boot(void) {
-	// update config depending on initial buttons
-	delay_ms(25); // delay in case power bounces on boot
-	Config cfg = config_read();
+    // update config depending on initial buttons
+    delay_ms(25); // delay in case power bounces on boot
+    Config cfg = config_read();
 
-	// read button state on boot
-	uint8_t btn_boot = 0;
-	btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
-	btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
+    // read button state on boot
+    uint8_t btn_boot = 0;
+    btn_boot |= (!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0;
+    btn_boot |= (!(RMB_NO_PORT->IDR & RMB_NO_PIN)) << 1;
 
-	switch (btn_boot) {
-	case 0b01: // LMB pressed
-		uint16_t counter = 0;
-		while (((!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0) == 0b01) {
-		  delay_ms(1);
-		  if (counter <= 5000)
-			  counter++;
-		  else
-			  break;
-		}
+    switch (btn_boot) {
+    case 0b01: // LMB pressed
+        uint16_t counter = 0;
+        while (((!(LMB_NO_PORT->IDR & LMB_NO_PIN)) << 0) == 0b01) {
+          delay_ms(1);
+          if (counter <= 5000)
+              counter++;
+          else
+              break;
+        }
 
-		if(counter > 5000) {
-			cfg ^= CONFIG_SWAP_LMB_AND_RMB;
-			config_write(cfg);
-			if (cfg & CONFIG_SWAP_LMB_AND_RMB)
-				anim_rightslow_pause_leftslow(1);
-			else
-				anim_leftslow_pause_rightslow(1);
-		} else {
-			cfg ^= CONFIG_ANGLE_SNAP_ON;
-			config_write(cfg);
-			if (cfg & CONFIG_ANGLE_SNAP_ON)
-				anim_cw(1);
-			else
-				anim_ccw(1);
-		}
-		break;
-	case 0b11: // LMB and RMB pressed
-		cfg ^= CONFIG_HS_USB;
-		config_write(cfg);
-		if (cfg & CONFIG_HS_USB)
-			anim_eight(1);
-		else
-			anim_one(1);
-		break;
-	}
+        if(counter > 5000) {
+            cfg ^= CONFIG_SWAP_LMB_AND_RMB;
+            config_write(cfg);
+            if (cfg & CONFIG_SWAP_LMB_AND_RMB)
+                anim_rightslow_pause_leftslow(1);
+            else
+                anim_leftslow_pause_rightslow(1);
+        } else {
+            cfg ^= CONFIG_ANGLE_SNAP_ON;
+            config_write(cfg);
+            if (cfg & CONFIG_ANGLE_SNAP_ON)
+                anim_cw(1);
+            else
+                anim_ccw(1);
+        }
+        break;
+    case 0b11: // LMB and RMB pressed
+        cfg ^= CONFIG_HS_USB;
+        config_write(cfg);
+        if (cfg & CONFIG_HS_USB)
+            anim_eight(1);
+        else
+            anim_one(1);
+        break;
+    }
 
-	// systick is enabled only if RMB was held initially (see bootloader)
-	if (SysTick->CTRL & SysTick_CTRL_ENABLE_Msk) {
-		cfg = config_default;
-		config_write(cfg);
-		anim_diag(1);
-	}
-	return cfg;
+    // systick is enabled only if RMB was held initially (see bootloader)
+    if (SysTick->CTRL & SysTick_CTRL_ENABLE_Msk) {
+        cfg = config_default;
+        config_write(cfg);
+        anim_diag(1);
+    }
+    return cfg;
 }
 
 static inline uint32_t mode_process(Config *cfg, int *skip,
-		const uint8_t btn, const uint8_t btn_prev, const uint8_t squal) {
-	// mode 0: normal
-	// mode 1: cpi programming
-	// mode 2: LOD/Hz programming
-	static uint32_t mode = 0;
-	static uint32_t ticks = 0; // counter for programming mode timeout
-	static uint32_t large_step = 0; // ignore releases of the other button for large dpi steps.
+        const uint8_t btn, const uint8_t btn_prev, const uint8_t squal) {
+    // mode 0: normal
+    // mode 1: cpi programming
+    // mode 2: LOD/Hz programming
+    static uint32_t mode = 0;
+    static uint32_t ticks = 0; // counter for programming mode timeout
+    static uint32_t large_step = 0; // ignore releases of the other button for large dpi steps.
 
-	const int hs = ((*cfg & CONFIG_HS_USB) != 0);
-	// 40000 / ( interval + 1)
-	// frames_to_skip 0 = 8000Hz = 40000/(0+1) = 40000 timeout ticks
-	// frames_to_skip 1 = 4000Hz = 40000/(1+1) = 20000 timeout ticks
-	// frames_to_skip 3 = 2000Hz = 40000/(3+1) = 10000 timeout ticks
-	// frames_to_skip 7 = 1000Hz = 40000/(7+1) =  5000 timeout ticks
-	const uint32_t timeout_ticks = TIMEOUT_SECS * (hs ? (8000 /(*skip + 1)) : 1000);
+    const int hs = ((*cfg & CONFIG_HS_USB) != 0);
+    // 40000 / ( interval + 1)
+    // frames_to_skip 0 = 8000Hz = 40000/(0+1) = 40000 timeout ticks
+    // frames_to_skip 1 = 4000Hz = 40000/(1+1) = 20000 timeout ticks
+    // frames_to_skip 3 = 2000Hz = 40000/(3+1) = 10000 timeout ticks
+    // frames_to_skip 7 = 1000Hz = 40000/(7+1) =  5000 timeout ticks
+    const uint32_t timeout_ticks = TIMEOUT_SECS * (hs ? (8000 /(*skip + 1)) : 1000);
 
-	// typically squal in 60s for lifted 3399.
-	const int SQUAL_THRESH = 75;
-	const int lifted = (squal < SQUAL_THRESH);
+    // typically squal in 60s for lifted 3399.
+    const int SQUAL_THRESH = 75;
+    const int lifted = (squal < SQUAL_THRESH);
 
-	uint16_t dpi = _FLD2VAL(CONFIG_DPI, *cfg);
+    uint16_t dpi = _FLD2VAL(CONFIG_DPI, *cfg);
 
-	if (mode == 1) { // handle cpi mode
-		const uint8_t released = (~btn) & btn_prev;
-		if ((released & 0b01) != 0 && !lifted) { // LMB released
-			if (btn & 0b10) { // if RMB is held
-				if (dpi != DPI_MIN) {
-					dpi = MAX(dpi - DPI_LARGE_JUMP, DPI_MIN);
-					anim_lg_downup(1);
-				}
-				large_step = 1;
-			} else if (!large_step) {
-				if (dpi != DPI_MIN) {
-					dpi--;
-					anim_downup(1);
-				}
-			} else {
-				large_step = 0;
-			}
-			*cfg = (*cfg & (~CONFIG_DPI_Msk)) | dpi;
-			sensor_set_dpi(dpi);
-		}
-		if ((released & 0b10) != 0 && !lifted) { // RMB released
-			if (btn & 0b01) { // if LMB is held
-				if (dpi != DPI_MAX) {
-					dpi = MIN(dpi + DPI_LARGE_JUMP, DPI_MAX);
-					anim_lg_updown(1);
-				}
-				large_step = 1;
-			} else if (!large_step) {
-				if (dpi != DPI_MAX) {
-					dpi++;
-					anim_updown(1);
-				}
-			} else {
-				large_step = 0;
-			}
-			*cfg = (*cfg & (~CONFIG_DPI_Msk)) | dpi;
-			sensor_set_dpi(dpi);
-		}
-	} else if (mode == 2) { // handle LOD/Hz mode
-		const uint8_t released = (~btn) & btn_prev;
-		if ((released & 0b01) != 0 && !lifted) { // LMB released
+    if (mode == 1) { // handle cpi mode
+        const uint8_t released = (~btn) & btn_prev;
+        if ((released & 0b01) != 0 && !lifted) { // LMB released
+            if (btn & 0b10) { // if RMB is held
+                if (dpi != DPI_MIN) {
+                    dpi = MAX(dpi - DPI_LARGE_JUMP, DPI_MIN);
+                    anim_lg_downup(1);
+                }
+                large_step = 1;
+            } else if (!large_step) {
+                if (dpi != DPI_MIN) {
+                    dpi--;
+                    anim_downup(1);
+                }
+            } else {
+                large_step = 0;
+            }
+            *cfg = (*cfg & (~CONFIG_DPI_Msk)) | dpi;
+            sensor_set_dpi(dpi);
+        }
+        if ((released & 0b10) != 0 && !lifted) { // RMB released
+            if (btn & 0b01) { // if LMB is held
+                if (dpi != DPI_MAX) {
+                    dpi = MIN(dpi + DPI_LARGE_JUMP, DPI_MAX);
+                    anim_lg_updown(1);
+                }
+                large_step = 1;
+            } else if (!large_step) {
+                if (dpi != DPI_MAX) {
+                    dpi++;
+                    anim_updown(1);
+                }
+            } else {
+                large_step = 0;
+            }
+            *cfg = (*cfg & (~CONFIG_DPI_Msk)) | dpi;
+            sensor_set_dpi(dpi);
+        }
+    } else if (mode == 2) { // handle LOD/Hz mode
+        const uint8_t released = (~btn) & btn_prev;
+        if ((released & 0b01) != 0 && !lifted) { // LMB released
 #ifdef BOARD_M2K
-			const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) == 0b10) ? 0b11 : 0b10;
-			*cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
-			anim_cw(new_lod);
+            const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) == 0b10) ? 0b11 : 0b10;
+            *cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
+            anim_cw(new_lod);
 #elif  BOARD_M3K
-			const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) + 1) % 3;
-			*cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
-			anim_cw(1 + new_lod);
+            const int new_lod = (_FLD2VAL(CONFIG_LOD, *cfg) + 1) % 3;
+            *cfg = (*cfg & (~CONFIG_LOD_Msk)) | (new_lod << CONFIG_LOD_Pos);
+            anim_cw(1 + new_lod);
 #endif
-			sensor_set_lod(new_lod);
-		}
-		if ((released & 0b10) != 0 && !lifted && hs) { // RMB released in HS mode
-			// loops 8k (0b00) -> 1k (0b11) -> 2k (0b10) -> 4k (0b01) -> 8k
-			const int new_itv = (_FLD2VAL(CONFIG_INTERVAL, *cfg) - 1) % 4;
-			*cfg = (*cfg & (~CONFIG_INTERVAL_Msk)) | (new_itv << CONFIG_INTERVAL_Pos);
-			*skip = (1 << new_itv) - 1;
-			anim_set_scale(hs ? (8 /(*skip + 1)) : 1);
-			anim_num(1 << (3 - new_itv));
-		}
-	}
+            sensor_set_lod(new_lod);
+        }
+        if ((released & 0b10) != 0 && !lifted && hs) { // RMB released in HS mode
+            // loops 8k (0b00) -> 1k (0b11) -> 2k (0b10) -> 4k (0b01) -> 8k
+            const int new_itv = (_FLD2VAL(CONFIG_INTERVAL, *cfg) - 1) % 4;
+            *cfg = (*cfg & (~CONFIG_INTERVAL_Msk)) | (new_itv << CONFIG_INTERVAL_Pos);
+            *skip = (1 << new_itv) - 1;
+            anim_set_scale(hs ? (8 /(*skip + 1)) : 1);
+            anim_num(1 << (3 - new_itv));
+        }
+    }
 
-	if (mode == 0) {
-		if (lifted && btn == 0b011) {
-			ticks++;
-			if (ticks == timeout_ticks) {
+    if (mode == 0) {
+        if (lifted && btn == 0b011) {
+            ticks++;
+            if (ticks == timeout_ticks) {
 #ifdef BOARD_M2K
-				// show DPI
-				// 10k steps (100 * 100)
-				anim_updown_pause((dpi + 1) / 100);
-				// 1k steps (100 * 10)
-				anim_rightleft_pause(((dpi + 1) % 100) / 10);
-				// 100 steps (100 * 1)
-				anim_downup_pause((((dpi + 1) % 100) % 10) / 1);
+                // show DPI
+                // 10k steps (100 * 100)
+                anim_updown_pause((dpi + 1) / 100);
+                // 1k steps (100 * 10)
+                anim_rightleft_pause(((dpi + 1) % 100) / 10);
+                // 100 steps (100 * 1)
+                anim_downup_pause((((dpi + 1) % 100) % 10) / 1);
 #elif BOARD_M3K
-				// show DPI
-				// 10k steps (50 * 200)
-				anim_updown_pause((dpi + 1) / 200);
-				// 1k steps (50 * 20)
-				anim_rightleft_pause(((dpi + 1) % 200) / 20);
-				// 100 steps (50 * 2)
-				anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
-				// 50 steps (50 * 1)
-				anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
+                // show DPI
+                // 10k steps (50 * 200)
+                anim_updown_pause((dpi + 1) / 200);
+                // 1k steps (50 * 20)
+                anim_rightleft_pause(((dpi + 1) % 200) / 20);
+                // 100 steps (50 * 2)
+                anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
+                // 50 steps (50 * 1)
+                anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
 #endif
-			}
-			if (ticks == 2*timeout_ticks) {
+            }
+            if (ticks == 2*timeout_ticks) {
 #ifdef BOARD_M2K
-				anim_cw(_FLD2VAL(CONFIG_LOD, *cfg));
+                anim_cw(_FLD2VAL(CONFIG_LOD, *cfg));
 #elif  BOARD_M3K
-				anim_cw(1 + _FLD2VAL(CONFIG_LOD, *cfg));
+                anim_cw(1 + _FLD2VAL(CONFIG_LOD, *cfg));
 #endif
-				if (hs) {
-					anim_pause(500);
-					anim_num(1 << (3 - _FLD2VAL(CONFIG_INTERVAL, *cfg)));
-				}
-			}
-		} else if (ticks < timeout_ticks) {
-			ticks = 0;
-		} // else, ticks >= timeout_ticks, save the value and wait
+                if (hs) {
+                    anim_pause(500);
+                    anim_num(1 << (3 - _FLD2VAL(CONFIG_INTERVAL, *cfg)));
+                }
+            }
+        } else if (ticks < timeout_ticks) {
+            ticks = 0;
+        } // else, ticks >= timeout_ticks, save the value and wait
 
-		if (btn == 0 && ticks >= timeout_ticks) {
-			if (ticks >= 2*timeout_ticks) {
-				mode = 2;
-			} else { // timeout_ticks <= times <= 2*timeout_ticks
-				mode = 1;
-			}
-		}
-	} else { // mode == 1 || mode == 2
-		if (lifted && btn == 0b011) {
-			ticks++;
-			if (ticks == timeout_ticks) {
-				if (mode == 1) {
+        if (btn == 0 && ticks >= timeout_ticks) {
+            if (ticks >= 2*timeout_ticks) {
+                mode = 2;
+            } else { // timeout_ticks <= times <= 2*timeout_ticks
+                mode = 1;
+            }
+        }
+    } else { // mode == 1 || mode == 2
+        if (lifted && btn == 0b011) {
+            ticks++;
+            if (ticks == timeout_ticks) {
+                if (mode == 1) {
 #ifdef BOARD_M2K
-					// show DPI
-					// 10k steps (100 * 100)
-					anim_updown_pause((dpi + 1) / 100);
-					// 1k steps (100 * 10)
-					anim_rightleft_pause(((dpi + 1) % 100) / 10);
-					// 100 steps (100 * 1)
-					anim_downup_pause((((dpi + 1) % 100) % 10) / 1);
+                    // show DPI
+                    // 10k steps (100 * 100)
+                    anim_updown_pause((dpi + 1) / 100);
+                    // 1k steps (100 * 10)
+                    anim_rightleft_pause(((dpi + 1) % 100) / 10);
+                    // 100 steps (100 * 1)
+                    anim_downup_pause((((dpi + 1) % 100) % 10) / 1);
 #elif BOARD_M3K
-					// show DPI
-					// 10k steps (50 * 200)
-					anim_updown_pause((dpi + 1) / 200);
-					// 1k steps (50 * 20)
-					anim_rightleft_pause(((dpi + 1) % 200) / 20);
-					// 100 steps (50 * 2)
-					anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
-					// 50 steps (50 * 1)
-					anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
+                    // show DPI
+                    // 10k steps (50 * 200)
+                    anim_updown_pause((dpi + 1) / 200);
+                    // 1k steps (50 * 20)
+                    anim_rightleft_pause(((dpi + 1) % 200) / 20);
+                    // 100 steps (50 * 2)
+                    anim_downup_pause((((dpi + 1) % 200) % 20) / 2);
+                    // 50 steps (50 * 1)
+                    anim_leftright_pause((((dpi + 1) % 200) % 20) % 2);
 #endif
-				} else if (mode == 2) {
-					anim_cw(1 + _FLD2VAL(CONFIG_LOD, *cfg));
-					if (hs) {
-						anim_pause(500);
-						anim_num(1 << (3 - _FLD2VAL(CONFIG_INTERVAL, *cfg)));
-					}
-				}
-				mode = 0;
-				config_write(*cfg);
-				ticks = 0;
-			}
-		} else {
-			ticks = 0;
-		}
-	}
+                } else if (mode == 2) {
+                    anim_cw(1 + _FLD2VAL(CONFIG_LOD, *cfg));
+                    if (hs) {
+                        anim_pause(500);
+                        anim_num(1 << (3 - _FLD2VAL(CONFIG_INTERVAL, *cfg)));
+                    }
+                }
+                mode = 0;
+                config_write(*cfg);
+                ticks = 0;
+            }
+        } else {
+            ticks = 0;
+        }
+    }
 
-	// input mask
-	return (mode == 0) ? btn : 0x00U;
+    // input mask
+    return (mode == 0) ? btn : 0x00U;
 
 }
 
 int main(void) {
-	extern uint32_t _sflash;
-	SCB->VTOR = (uint32_t) (&_sflash);
-	SCB_EnableICache();
-	SCB_EnableDCache();
+    extern uint32_t _sflash;
+    SCB->VTOR = (uint32_t) (&_sflash);
+    SCB_EnableICache();
+    SCB_EnableDCache();
 
-	clk_init();
-	delay_init();
-	btn_whl_init();
+    clk_init();
+    delay_init();
+    btn_whl_init();
 
-	// TODO not const maybe calls function each time
-	Config cfg = config_boot();
-	// TODO if we don't reset after web config change the hs_usb could be false but we could be set to hs_usb?
-	const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
-	// 8000 to 1000, 2000, 4000
-	// 0, 1, 2, 3
-	// 0, 1, 3, 7 frames to skip
+    // TODO not const maybe calls function each time
+    Config cfg = config_boot();
+    // TODO if we don't reset after web config change the hs_usb could be false but we could be set to hs_usb?
+    const int hs_usb = ((cfg & CONFIG_HS_USB) != 0);
+    // 8000 to 1000, 2000, 4000
+    // 0, 1, 2, 3
+    // 0, 1, 3, 7 frames to skip
     int frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
     int frame_counter = 0;
 
-	delay_ms(500);
+    delay_ms(500);
 
-	usb_init(hs_usb);
-	// frames_to_skip = 0 = 8000Hz = 8 / (0 + 1)  = 8 animation_scaling
-	// frames_to_skip = 1 = 4000Hz = 8 / (1 + 1)  = 4 animation_scaling
-	// frames_to_skip = 3 = 2000Hz = 8 / (3 + 1)  = 2 animation_scaling
-	// frames_to_skip = 7 = 1000Hz = 8 / (7 + 1)  = 1 animation_scaling
-	anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
+    usb_init(hs_usb);
+    // frames_to_skip = 0 = 8000Hz = 8 / (0 + 1)  = 8 animation_scaling
+    // frames_to_skip = 1 = 4000Hz = 8 / (1 + 1)  = 4 animation_scaling
+    // frames_to_skip = 3 = 2000Hz = 8 / (3 + 1)  = 2 animation_scaling
+    // frames_to_skip = 7 = 1000Hz = 8 / (7 + 1)  = 1 animation_scaling
+    anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
 
-	spi_init();
-	sensor_init(cfg);
+    spi_init();
+    sensor_init(cfg);
 
-	uint8_t btn_unmasked_prev = 0;
-	uint8_t btn_unmasked = 0;
-	int whl_lastlast = whl_read();
-	int whl_last = whl_lastlast;
-	int whl_count = 0; // microframe counter for limiting wheel code rate
+    uint8_t btn_unmasked_prev = 0;
+    uint8_t btn_unmasked = 0;
+    int whl_lastlast = whl_read();
+    int whl_last = whl_lastlast;
+    int whl_count = 0; // microframe counter for limiting wheel code rate
 
-	usb_wait_configured();
+    usb_wait_configured();
 
-	// Use to check TIMCLK2/delay_us. Should be delay_us(X+5)
-	// while (1) {
-	// spi_send(0x1);
-	// delay_us(15);
-	//}
+    // Use to check TIMCLK2/delay_us. Should be delay_us(X+5)
+    // while (1) {
+    // spi_send(0x1);
+    // delay_us(15);
+    //}
 
-	while (1) {
-		if (update_cfg) {
-			update_cfg = 0;
+    while (1) {
+        if (update_cfg) {
+            update_cfg = 0;
 
-			Config new_cfg = ((uint16_t)cfg_bytes[1] << 8) | cfg_bytes[0];
-			unsigned int hsusb_before_update = (cfg & CONFIG_HS_USB);
+            Config new_cfg = ((uint16_t)cfg_bytes[1] << 8) | cfg_bytes[0];
+            unsigned int hsusb_before_update = (cfg & CONFIG_HS_USB);
 
-	        // Factory reset if last two bytes are both 0xFF
-	        if (cfg_bytes[2] == 0xFF && cfg_bytes[3] == 0xFF){
-	          config_write(config_default);
-	        // No need to update cfg if it's the same
-	        } else if (new_cfg == cfg) {
-	        	continue;
-	        } else {
-	          // Limit DPI. M2K 119 steps 12000 dpi and M3K 399 steps 20000 dpi
-	          if ((new_cfg & CONFIG_DPI) > DPI_MAX) {
-	        	  new_cfg = (new_cfg & (~CONFIG_DPI_Msk)) | DPI_MAX;
-	          }
+            // Factory reset if last two bytes are both 0xFF
+            if (cfg_bytes[2] == 0xFF && cfg_bytes[3] == 0xFF){
+              config_write(config_default);
+            // No need to update cfg if it's the same
+            } else if (new_cfg == cfg) {
+                continue;
+            } else {
+              // Limit DPI. M2K 119 steps 12000 dpi and M3K 399 steps 20000 dpi
+              if ((new_cfg & CONFIG_DPI) > DPI_MAX) {
+                  new_cfg = (new_cfg & (~CONFIG_DPI_Msk)) | DPI_MAX;
+              }
 
 #ifdef BOARD_M2K
-			  // Limit LOD to 2 and 3
-			  if ((_FLD2VAL(CONFIG_LOD, new_cfg) != 2) && (_FLD2VAL(CONFIG_LOD, new_cfg) != 3)) {
-			      new_cfg = (new_cfg & (~CONFIG_LOD_Msk)) | (2 << CONFIG_LOD_Pos);
-			  }
+              // Limit LOD to 2 and 3
+              if ((_FLD2VAL(CONFIG_LOD, new_cfg) != 2) && (_FLD2VAL(CONFIG_LOD, new_cfg) != 3)) {
+                  new_cfg = (new_cfg & (~CONFIG_LOD_Msk)) | (2 << CONFIG_LOD_Pos);
+              }
 #elif BOARD_M3K
-			  // Limit LOD to 0, 1 and 2
-			  if (!(_FLD2VAL(CONFIG_LOD, new_cfg) < 3) ) {
-			      new_cfg = (new_cfg & (~CONFIG_LOD_Msk)) | (2 << CONFIG_LOD_Pos);
-			  }
+              // Limit LOD to 0, 1 and 2
+              if (!(_FLD2VAL(CONFIG_LOD, new_cfg) < 3) ) {
+                  new_cfg = (new_cfg & (~CONFIG_LOD_Msk)) | (2 << CONFIG_LOD_Pos);
+              }
 #endif
-	          config_write(new_cfg);
-	        }
+              config_write(new_cfg);
+            }
 
-	        cfg = config_read();
+            cfg = config_read();
 
-	        // If USB Speed changed we must reset
-	        if (hsusb_before_update != (cfg & CONFIG_HS_USB)){
-	          // Delay to let the USB finish up before reset
-	          delay_us(5000);
-	          NVIC_SystemReset();
-	        } else {
-	          sensor_set_lod(_FLD2VAL(CONFIG_LOD, cfg));
-	          sensor_set_as((cfg & CONFIG_ANGLE_SNAP_ON) != 0);
-	          sensor_set_dpi((cfg & CONFIG_DPI));
-	          frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
-	          anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
-	        }
-		}
+            // If USB Speed changed we must reset
+            if (hsusb_before_update != (cfg & CONFIG_HS_USB)){
+              // Delay to let the USB finish up before reset
+              delay_us(5000);
+              NVIC_SystemReset();
+            } else {
+              sensor_set_lod(_FLD2VAL(CONFIG_LOD, cfg));
+              sensor_set_as((cfg & CONFIG_ANGLE_SNAP_ON) != 0);
+              sensor_set_dpi((cfg & CONFIG_DPI));
+              frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
+              anim_set_scale(hs_usb ? (8 /(frames_to_skip + 1)) : 1);
+            }
+        }
 
-		// do not run until NAK or XFRC on EP1
-		if (sync != 1)
-			continue;
-		sync = 0;
+        // do not run until NAK or XFRC on EP1
+        if (sync != 1)
+            continue;
+        sync = 0;
 
-		// M2K
-		// 48 us max
-		// M3K
-		// 106 us max
-		// Give 2 us tolerance
+        // M2K
+        // 48 us max
+        // M3K
+        // 106 us max
+        // Give 2 us tolerance
 #ifdef BOARD_M2K
-		if (hs_usb) {
-			delay_us(46);
-		} else {
-			delay_us(921);
-		}
+        if (hs_usb) {
+            delay_us(46);
+        } else {
+            delay_us(921);
+        }
 #elif  BOARD_M3K
-		if (hs_usb) {
-			delay_us(104);
-		} else {
-			delay_us(979);
-		}
+        if (hs_usb) {
+            delay_us(104);
+        } else {
+            delay_us(979);
+        }
 #endif
 
-		// skip frames for polling rate but then stop skipping if idle
-		if (frame_counter < frames_to_skip) {
-			frame_counter++;
-			continue;
-		}
+        // skip frames for polling rate but then stop skipping if idle
+        if (frame_counter < frames_to_skip) {
+            frame_counter++;
+            continue;
+        }
 
-		// Reset packet
-		packet.btn = 0;
-		packet.whl = 0;
-		packet.x = 0;
-		packet.y = 0;
+        // Reset packet
+        packet.btn = 0;
+        packet.whl = 0;
+        packet.x = 0;
+        packet.y = 0;
 
-		// read sensor, buttons
-		ss_low();
+        // read sensor, buttons
+        ss_low();
 #ifdef BOARD_M2K
-		spi_send(0x50);
-		delay_us(35);
+        spi_send(0x50);
+        delay_us(35);
 #elif  BOARD_M3K
-		spi_send(0x16);
-		delay_us(2);
+        spi_send(0x16);
+        delay_us(2);
 #endif
-		(void) spi_recv(); // motion, not used
-		(void) spi_recv(); // observation, not used
-		packet.u8[3] = spi_recv(); // x lower 8 bits
-		packet.u8[4] = spi_recv(); // x upper 8 bits
-		packet.u8[5] = spi_recv(); // y lower 8 bits
-		packet.u8[6] = spi_recv(); // y upper 8 bits
-		const uint8_t squal = spi_recv(); // SQUAL
-		ss_high();
+        (void) spi_recv(); // motion, not used
+        (void) spi_recv(); // observation, not used
+        packet.u8[3] = spi_recv(); // x lower 8 bits
+        packet.u8[4] = spi_recv(); // x upper 8 bits
+        packet.u8[5] = spi_recv(); // y lower 8 bits
+        packet.u8[6] = spi_recv(); // y upper 8 bits
+        const uint8_t squal = spi_recv(); // SQUAL
+        ss_high();
 
-		if (whl_count == 0) {
-			const int whl_now = whl_read();
-			if (whl_now != whl_last) {
-				if (!((whl_now == 0 && whl_last == 3) || (whl_now == 3 && whl_last == 0))) {
-					if (whl_now == 0 && whl_lastlast == 3) {
-						packet.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
-					} else if (whl_now == 3 && whl_lastlast == 0) {
-						packet.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
-					}
-					whl_lastlast = whl_last;
-					whl_last = whl_now;
-				}
-			}
-		}
-		if (hs_usb) // only run wheel code every 4 microframes
-			whl_count = (whl_count + 1) % 4;
+        if (whl_count == 0) {
+            const int whl_now = whl_read();
+            if (whl_now != whl_last) {
+                if (!((whl_now == 0 && whl_last == 3) || (whl_now == 3 && whl_last == 0))) {
+                    if (whl_now == 0 && whl_lastlast == 3) {
+                        packet.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
+                    } else if (whl_now == 3 && whl_lastlast == 0) {
+                        packet.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
+                    }
+                    whl_lastlast = whl_last;
+                    whl_last = whl_now;
+                }
+            }
+        }
+        if (hs_usb) // only run wheel code every 4 microframes
+            whl_count = (whl_count + 1) % 4;
 
-		uint16_t btn_raw = btn_read((cfg & CONFIG_SWAP_LMB_AND_RMB));
-		const uint8_t btn_NO = (btn_raw & 0xFF);
-		const uint8_t btn_NC = (btn_raw >> 8);
+        uint16_t btn_raw = btn_read((cfg & CONFIG_SWAP_LMB_AND_RMB));
+        const uint8_t btn_NO = (btn_raw & 0xFF);
+        const uint8_t btn_NC = (btn_raw >> 8);
 
-		// Debounce
-		btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_unmasked_prev);
+        // Debounce
+        btn_unmasked = (~btn_NO & 0b11111) | (btn_NC & btn_unmasked_prev);
 
-		// All buttons are ignored when you are changing settings on the mouse directly
-		// mode_process returns btn_unmasked during normal use and 0x00 when changing settings
-	    packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_unmasked_prev, squal);
+        // All buttons are ignored when you are changing settings on the mouse directly
+        // mode_process returns btn_unmasked during normal use and 0x00 when changing settings
+        packet.btn = mode_process(&cfg, &frames_to_skip, btn_unmasked, btn_unmasked_prev, squal);
 
-		// Save for next loop
-		btn_unmasked_prev = btn_unmasked;
+        // Save for next loop
+        btn_unmasked_prev = btn_unmasked;
 
-		// TODO: Fixed a bug that caused this to always be true. So need to verify behavior
-		if (anim_running()) {
-		// Add animation x and y data
-			const struct Xy a = anim_read(); // returns 0 if no animation left or when scaling
-			packet.x += a.x;
-			packet.y += a.y;
-			// If we are animating we must keep skipping frames/disable the idle optimization
-			frame_counter = 0;
-		}
+        // TODO: Fixed a bug that caused this to always be true. So need to verify behavior
+        if (anim_running()) {
+        // Add animation x and y data
+            const struct Xy a = anim_read(); // returns 0 if no animation left or when scaling
+            packet.x += a.x;
+            packet.y += a.y;
+            // If we are animating we must keep skipping frames/disable the idle optimization
+            frame_counter = 0;
+        }
 
-		__disable_irq();
-		// check to see if there is new data
-		if ( packet.btn != last_packet.btn || packet.x || packet.y || packet.whl ) {
-		  // save last packet
-		  last_packet.btn = packet.btn;
-		  ready = 1;
-		  frame_counter = 0;
-		  // enqueue fifo write
-		  NVIC->STIR = OTG_HS_EP1_IN_IRQn;
-		}
-	    __enable_irq();
-	} // while
-	return 0;
+        __disable_irq();
+        // check to see if there is new data
+        if ( packet.btn != last_packet.btn || packet.x || packet.y || packet.whl ) {
+          // save last packet
+          last_packet.btn = packet.btn;
+          ready = 1;
+          frame_counter = 0;
+          // enqueue fifo write
+          NVIC->STIR = OTG_HS_EP1_IN_IRQn;
+        }
+        __enable_irq();
+    } // while
+    return 0;
 }

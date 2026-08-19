@@ -113,13 +113,13 @@ USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
   {
   case USB_REQ_TYPE_CLASS:
   case USB_REQ_TYPE_VENDOR:
-	  if (req->bmRequest == 0xC0U && req->bRequest == 0xEEU && req->wIndex == 0x0007U) {
-		  pbuf = pdev->pDesc->GetMSOS2Descriptor(pdev->dev_speed, &len);
-		  (void)USBD_CtlSendData(pdev, pbuf, len);
-	  } else {
-		  ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
-	  }
-	  break;
+      if (req->bmRequest == 0xC0U && req->bRequest == 0xEEU && req->wIndex == 0x0007U) {
+          pbuf = pdev->pDesc->GetMSOS2Descriptor(pdev->dev_speed, &len);
+          (void)USBD_CtlSendData(pdev, pbuf, len);
+      } else {
+          ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+      }
+      break;
 
   case USB_REQ_TYPE_STANDARD:
     switch (req->bRequest)
@@ -503,20 +503,20 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
       }
       break;
 #if 0
-	// MS OS 1.0
-	// This is the old way via 0xEE string descriptor.
-	// Not currently used but worked fine. Leaving here for future reference
-	case USB_IDX_MSOS1_STR:
-	  if (pdev->pDesc->GetMSOS2StrDescriptor != NULL)
-	    {
-		  pbuf = pdev->pDesc->GetMSOS2StrDescriptor(pdev->dev_speed, &len);
-		}
-		else
-		{
-	      USBD_CtlError(pdev, req);
-		  err++;
-		}
-		break;
+    // MS OS 1.0
+    // This is the old way via 0xEE string descriptor.
+    // Not currently used but worked fine. Leaving here for future reference
+    case USB_IDX_MSOS1_STR:
+      if (pdev->pDesc->GetMSOS2StrDescriptor != NULL)
+        {
+          pbuf = pdev->pDesc->GetMSOS2StrDescriptor(pdev->dev_speed, &len);
+        }
+        else
+        {
+          USBD_CtlError(pdev, req);
+          err++;
+        }
+        break;
 #endif
 
     default:
