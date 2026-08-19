@@ -49,7 +49,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define DFU_TIMEOUT         5 // seconds of holding L+R for DFU mode
+#define DFU_TIMEOUT 5 // seconds of holding L+R for DFU mode
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 USBD_HandleTypeDef USBD_Device;
