@@ -215,7 +215,6 @@
     #define LMB_NO_PORT         GPIOE
     #define LMB_NO_PIN_Pos      9
     #define LMB_NO_PIN          (1 << LMB_NO_PIN_Pos)
-    #define LMB
     #define LMB_NO_EXTICFG      SYSCFG_EXTICR3_EXTI9_PE
 
     #define LMB_NC_CLK_ENABLE() do {RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;} while(0)
