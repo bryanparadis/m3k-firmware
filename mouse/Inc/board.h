@@ -26,13 +26,13 @@
 #pragma once
 
 #ifdef BOARD_M2K
-	#define USB_MFG "Zaunkoenig"
-	#define USB_NAME "M2K"
-	#define FW_VERSION "parawizard new v0.8.4"
-	#define FW_VERSION_FORMATTED " firmware " FW_VERSION
-	static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal to 64 bytes");
-	#define USB_PID 0xA3CF
-	#define USB_VID 0x0483
+    #define USB_MFG "Zaunkoenig"
+    #define USB_NAME "M2K"
+    #define FW_VERSION "parawizard new v0.8.5"
+    #define FW_VERSION_FORMATTED " firmware " FW_VERSION
+    static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal to 64 bytes");
+    #define USB_PID 0xA3CF
+    #define USB_VID 0x0483
 
 	// SPI periph pin clocks
 	#define SPIx                             SPI1
@@ -168,13 +168,13 @@
 	#define WHL_N_PIN          (1 << WHL_N_PIN_Pos)
 	#define WHL_N_EXTICFG      SYSCFG_EXTICR4_EXTI12_PD
 #elif BOARD_M3K
-	#define USB_MFG "Zaunkoenig"
-	#define USB_NAME "M3K"
-	#define FW_VERSION "parawizard new v0.8.4"
-	#define FW_VERSION_FORMATTED " firmware " FW_VERSION
-	static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal to 64 bytes");
-	#define USB_PID 0xA462
-	#define USB_VID 0x0483
+    #define USB_MFG "Zaunkoenig"
+    #define USB_NAME "M3K"
+    #define FW_VERSION "parawizard new v0.8.5"
+    #define FW_VERSION_FORMATTED " firmware " FW_VERSION
+    static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal to 64 bytes");
+    #define USB_PID 0xA462
+    #define USB_VID 0x0483
 
 	// SPI periph pin clocks
 	#define SPIx                             SPI3
