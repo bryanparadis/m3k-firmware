@@ -297,6 +297,9 @@ int main(void) {
 	// 0, 1, 3, 7 frames to skip
     int frames_to_skip = hs_usb ? (1 << _FLD2VAL(CONFIG_INTERVAL, cfg)) - 1 : 0;
     int frame_counter = 0;
+    // sets wheel throtting by index frames_to_skip
+    // 8000 % 4 = 2000 Hz, 4000 % 2 = 2000 Hz, 2000 % 1 = 2000 Hz, 1000 % 1 = 1000 Hz
+    int whl_div[] = {4, 2, 1, 1, 1, 1, 1, 1};
 
 	delay_ms(500);
 
@@ -427,22 +430,22 @@ int main(void) {
 		const uint8_t squal = spi_recv(); // SQUAL
 		ss_high();
 
-		if (whl_count == 0) {
-			const int whl_now = whl_read();
-			if (whl_now != whl_last) {
-				if (!((whl_now == 0 && whl_last == 3) || (whl_now == 3 && whl_last == 0))) {
-					if (whl_now == 0 && whl_lastlast == 3) {
-						packet.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
-					} else if (whl_now == 3 && whl_lastlast == 0) {
-						packet.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
-					}
-					whl_lastlast = whl_last;
-					whl_last = whl_now;
-				}
-			}
-		}
-		if (hs_usb) // only run wheel code every 4 microframes
-			whl_count = (whl_count + 1) % 4;
+        if (whl_count == 0) {
+            const int whl_now = whl_read();
+            if (whl_now != whl_last) {
+                if (!((whl_now == 0 && whl_last == 3) || (whl_now == 3 && whl_last == 0))) {
+                    if (whl_now == 0 && whl_lastlast == 3) {
+                        packet.whl = (whl_last == 1) ? -1 : (whl_last == 2) ? 1 : 0;
+                    } else if (whl_now == 3 && whl_lastlast == 0) {
+                        packet.whl = (whl_last == 1) ? 1 : (whl_last == 2) ? -1 : 0;
+                    }
+                    whl_lastlast = whl_last;
+                    whl_last = whl_now;
+                }
+            }
+        }
+        if (hs_usb)
+            whl_count = (whl_count + 1) % whl_div[frames_to_skip];
 
 		uint16_t btn_raw = btn_read((cfg & CONFIG_SWAP_LMB_AND_RMB));
 		const uint8_t btn_NO = (btn_raw & 0xFF);
