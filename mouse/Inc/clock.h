@@ -105,7 +105,7 @@ static void clk_init(void)
     while ((RCC->CR & RCC_CR_PLLRDY) != 0);
 
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-    MODIFY_REG(PWR->CR1, PWR_CR1_VOS, _VAL2FLD(PWR_CR1_VOS, 0b11)); // Scale 1 for 160 MHz
+    MODIFY_REG(PWR->CR1, PWR_CR1_VOS, _VAL2FLD(PWR_CR1_VOS, 0b10)); // Scale 2 for 160 MHz
 
     MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_5WS); // 5WS for 160 MHz
     (void)FLASH->ACR; // Guarantees that flash latency has been set before changing the sysclk
