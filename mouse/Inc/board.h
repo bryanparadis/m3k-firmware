@@ -7,7 +7,7 @@
     #define USB_NAME "M2K"
     #define FW_VERSION "parawizard new v0.8.5"
     #define FW_VERSION_FORMATTED " firmware " FW_VERSION
-    static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal to 64 bytes");
+    static_assert(sizeof(FW_VERSION) <= 63, "FW_VERSION must be less than or equal to 63 bytes. ID+FW_VERSION = 64");
     #define USB_PID 0xA3CF
     #define USB_VID 0x0483
 
@@ -149,7 +149,7 @@
     #define USB_NAME "M3K"
     #define FW_VERSION "parawizard new v0.8.5"
     #define FW_VERSION_FORMATTED " firmware " FW_VERSION
-    static_assert(sizeof(FW_VERSION) <= 64, "FW_VERSION must be less than or equal to 64 bytes");
+    static_assert(sizeof(FW_VERSION) <= 63, "FW_VERSION must be less than or equal to 63 bytes. ID+FW_VERSION = 64");
     #define USB_PID 0xA462
     #define USB_VID 0x0483
 
